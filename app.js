@@ -142,9 +142,9 @@
 
   function boldFactor(weight) {
     if (!synthBold || weight < 600) return 0;
-    if (weight >= 900) return 0.042;
-    if (weight >= 800) return 0.032;
-    return 0.021;
+    if (weight >= 900) return 0.06;
+    if (weight >= 800) return 0.045;
+    return 0.03;
   }
 
   function roundRect(g, x, y, w, h, r) {
