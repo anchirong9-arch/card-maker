@@ -35,6 +35,7 @@
     shadowY: 8,
     shadowOpacity: 55,
     accent: '#C084FC',
+    outroRatio: '1:1',
     outro: {
       brand: 'SINGULBUNGUL ANIMAL VILLAGE',
       label: '오늘의 짤 / END',
@@ -489,13 +490,16 @@
   }
 
   /* ───────── ② 아웃트로 ───────── */
-  function drawOutro(g) {
+  function outroHeight() { return S.outroRatio === '4:5' ? 1350 : 1080; }
+
+  function drawOutro(g, OH) {
     const BG = '#111216', SURFACE = '#1B1D24', BORDER = '#2B2E38';
     const MAIN = '#F4F5F7', SUB = '#CBD0DC', MUTED = '#7C8497';
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.fillStyle = BG;
-    g.fillRect(0, 0, W, H);
+    g.fillRect(0, 0, W, OH);
 
+    const extra = Math.max(0, OH - 1080);   // 4:5 일 때 남는 세로 여백을 블록 사이에 나눠 넣는다
     const pad = 84;
     let y = 66;
 
@@ -527,13 +531,13 @@
     y += 46;
     g.strokeStyle = BORDER; g.lineWidth = 2;
     g.beginPath(); g.moveTo(pad, y); g.lineTo(W - pad, y); g.stroke();
-    y += 60;
+    y += 60 + extra * 0.10;
 
     const t1 = (S.outro.title1 || '').trim();
     const t2 = (S.outro.title2 || '').trim();
     if (t1) y += text(t1, pad, y, 70, 900, F_NOTO, MAIN, W - pad * 2) * 1.32;
     if (t2) y += text(t2, pad, y, 70, 900, F_NOTO, S.accent, W - pad * 2) * 1.32;
-    y += 24;
+    y += 24 + extra * 0.16;
 
     const nums = ['01', '02', '03'];
     const list = [S.outro.item1, S.outro.item2, S.outro.item3];
@@ -544,14 +548,14 @@
       y += 56;
       g.strokeStyle = '#2E323D'; g.lineWidth = 1;
       g.beginPath(); g.moveTo(pad, y + 12); g.lineTo(W - pad, y + 12); g.stroke();
-      y += 28;
+      y += 28 + extra * 0.05;
     }
-    y += 34;
+    y += 34 + extra * 0.08;
 
     const ctaSize = 48;
     if (S.outro.cta1) y += text(S.outro.cta1, pad, y, ctaSize, 900, F_NOTO, MAIN, W - pad * 2) * 1.22;
     if (S.outro.cta2) y += text(S.outro.cta2, pad, y, ctaSize, 900, F_NOTO, MAIN, W - pad * 2) * 1.22;
-    y += 30;
+    y += 30 + extra * 0.10;
 
     for (const ch of [S.outro.ch1, S.outro.ch2]) {
       const raw = (ch || '').trim();
@@ -568,7 +572,7 @@
       y += 44;
     }
 
-    const fy = H - 88;
+    const fy = OH - 88;
     g.strokeStyle = BORDER; g.lineWidth = 1;
     g.beginPath(); g.moveTo(pad, fy - 34); g.lineTo(W - pad, fy - 34); g.stroke();
     text(S.outro.foot || ' ', pad, fy, 25, 400, F_NOTO, MUTED, W - pad * 2 - 130);
@@ -591,14 +595,22 @@
   function render() {
     const g = canvas.getContext('2d');
     if (S.tab === 'outro') {
-      drawOutro(g);
+      const OH = outroHeight();
+      if (canvas.height !== OH) canvas.height = OH;
+      canvas.width = W;
+      $('stage').style.aspectRatio = `1080 / ${OH}`;
+      drawOutro(g, OH);
       $('stageEmpty').hidden = true;
       $('zipBtn').disabled = true;
       $('pngBtn').disabled = false;
-      $('dims').textContent = '1080 × 1080 · 아웃트로';
+      $('outroSizeTxt').textContent = `1080 × ${OH}`;
+      $('dims').textContent = `1080 × ${OH} · 아웃트로`;
       if (!fontsReady) note('폰트 불러오는 중…');
       return;
     }
+    if (canvas.height !== H) canvas.height = H;
+    if (canvas.width !== W) canvas.width = W;
+    $('stage').style.aspectRatio = '1 / 1';
     $('dims').textContent = '1080 × 1080';
     if (active < 0 || !items[active]) {
       g.clearRect(0, 0, W, H);
@@ -710,8 +722,16 @@
       ['oCta1', 'cta1'], ['oCta2', 'cta2'], ['oCh1', 'ch1'], ['oCh2', 'ch2'], ['oFoot', 'foot']];
     for (const [id, key] of map) $(id).value = S.outro[key];
 
+    document.querySelectorAll('#outroRatioSeg button').forEach(b =>
+      b.addEventListener('click', () => {
+        S.outroRatio = b.dataset.ratio;
+        document.querySelectorAll('#outroRatioSeg button').forEach(x => x.classList.toggle('on', x === b));
+        save(); render();
+      }));
+
     document.querySelectorAll('#fitSeg button').forEach(b => b.classList.toggle('on', b.dataset.fit === S.fit));
     document.querySelectorAll('#textSeg button').forEach(b => b.classList.toggle('on', b.dataset.text === S.textMode));
+    document.querySelectorAll('#outroRatioSeg button').forEach(b => b.classList.toggle('on', b.dataset.ratio === S.outroRatio));
     document.querySelectorAll('[data-when]').forEach(el => { el.hidden = el.dataset.when !== S.textMode; });
     applyAccentUI();
   }

@@ -173,7 +173,11 @@
   <!-- ══════════ 아웃트로 패널 ══════════ -->
   <section class="controls" id="panelOutro" aria-label="아웃트로 카드 설정" hidden>
     <div class="card">
-      <h2>아웃트로 카드 <small>1080 × 1080</small></h2>
+      <h2>아웃트로 카드 <small id="outroSizeTxt">1080 × 1080</small></h2>
+      <div class="seg" id="outroRatioSeg" role="group" aria-label="아웃트로 비율">
+        <button type="button" data-ratio="1:1" class="on">1:1 · 1080×1080</button>
+        <button type="button" data-ratio="4:5">4:5 · 1080×1350</button>
+      </div>
       <label class="field"><span>상단 브랜드명</span>
         <input type="text" id="oBrand" maxlength="40" value="SINGULBUNGUL ANIMAL VILLAGE">
       </label>
@@ -227,6 +231,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
