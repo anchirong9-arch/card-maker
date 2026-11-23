@@ -797,16 +797,20 @@
     const fs = $('fontState');
     fs.classList.add('wait');
     fs.textContent = '폰트 준비 중…';
+    // 한글 서브셋까지 실제로 받아오려면 샘플 한글 문자열을 넘겨야 한다
+    // (문자열 없이 load() 하면 라틴 서브셋만 받아 캔버스가 대체 폰트로 그려짐)
+    const KO = '가나다라마바사아자차카타파하 짤 모음 0123';
     Promise.allSettled([
-      document.fonts.load('400 64px "Black Han Sans"'),
-      document.fonts.load('400 64px "Noto Sans KR"'),
-      document.fonts.load('500 64px "Noto Sans KR"'),
-      document.fonts.load('700 64px "Noto Sans KR"'),
-      document.fonts.load('900 64px "Noto Sans KR"')
+      document.fonts.load('400 64px "Black Han Sans"', KO),
+      document.fonts.load('400 64px "Noto Sans KR"', KO),
+      document.fonts.load('500 64px "Noto Sans KR"', KO),
+      document.fonts.load('700 64px "Noto Sans KR"', KO),
+      document.fonts.load('900 64px "Noto Sans KR"', KO)
     ]).then(() => document.fonts.ready).then(() => {
-      fontsReady = true;
+      fontsReady = document.fonts.check('900 70px "Noto Sans KR"', '짤')
+        && document.fonts.check('400 70px "Black Han Sans"', '짤');
       fs.classList.remove('wait');
-      fs.textContent = '폰트 준비 완료';
+      fs.textContent = fontsReady ? '폰트 준비 완료' : '일부 폰트 대체됨';
       render();
     }).catch(() => {
       fs.textContent = '기본 폰트로 표시';
