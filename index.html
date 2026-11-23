@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0e12">
+<title>1:1 블러 카드 메이커</title>
+<meta name="description" content="사진 한 장(또는 여러 장)을 1080×1080 블러 배경 카드로 — 썸네일 2줄 문구, 하단 1줄 코멘트, 다크 아웃트로 카드까지 브라우저에서 바로 만들고 PNG·ZIP으로 저장">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d0e12'/%3E%3Crect x='6' y='19' width='20' height='4' rx='2' fill='%23C084FC'/%3E%3Crect x='6' y='9' width='12' height='6' rx='2' fill='%23E9EAF0'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"></span>
+    <div class="brand-txt">
+      <b>1:1 블러 카드 메이커</b>
+      <small>1080×1080 · 썸네일 · 코멘트 · 아웃트로 · PNG/ZIP</small>
+    </div>
+  </div>
+
+  <nav class="modes" role="tablist" aria-label="제작 종류">
+    <button type="button" role="tab" data-tab="card" class="on" aria-selected="true">① 1:1 블러 카드</button>
+    <button type="button" role="tab" data-tab="outro" aria-selected="false">② 아웃트로 카드</button>
+  </nav>
+</header>
+
+<main class="layout" id="layoutMain">
+
+  <!-- ══════════ 미리보기 ══════════ -->
+  <section class="stage-col" aria-label="미리보기">
+    <div class="stage-wrap">
+      <div class="stage" id="stage">
+        <canvas id="stageCanvas" width="1080" height="1080"></canvas>
+        <div class="stage-empty" id="stageEmpty">
+          <div class="drop-ico" aria-hidden="true">⌁</div>
+          <b>사진을 끌어다 놓기</b>
+          <span>또는 <u>여기를 눌러 선택</u> · Ctrl+V 붙여넣기</span>
+          <em>1080 × 1080 · 블러 배경 자동</em>
+        </div>
+      </div>
+      <div class="stage-bar">
+        <button type="button" class="btn primary" id="pngBtn">PNG 저장</button>
+        <button type="button" class="btn" id="zipBtn">전체 ZIP</button>
+        <span class="dims" id="dims">1080 × 1080</span>
+      </div>
+      <p class="stage-note" id="stageNote">사진을 넣으면 바로 1:1 블러 카드가 만들어집니다.</p>
+    </div>
+
+    <div class="thumbs" id="thumbs" aria-label="올린 사진"></div>
+  </section>
+
+  <!-- ══════════ 카드 패널 ══════════ -->
+  <section class="controls" id="panelCard" aria-label="1:1 블러 카드 설정">
+
+    <div class="card">
+      <h2>사진</h2>
+      <div class="row">
+        <button type="button" class="btn" id="pickBtn">사진 선택</button>
+        <button type="button" class="btn ghost" id="clearBtn">모두 지우기</button>
+        <span class="muted" id="countTxt">0장</span>
+      </div>
+      <p class="hint">여러 장을 한 번에 넣으면 같은 설정으로 <b>ZIP 일괄 저장</b>할 수 있어요.</p>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    </div>
+
+    <div class="card">
+      <h2>배경 &amp; 사진</h2>
+      <label class="ctl"><span>블러 강도</span><b id="blurVal">28</b>
+        <input type="range" id="blur" min="0" max="60" step="1" value="28">
+      </label>
+      <label class="ctl"><span>배경 어둡기</span><b id="darkVal">35%</b>
+        <input type="range" id="dark" min="0" max="80" step="1" value="35">
+      </label>
+      <div class="seg" id="fitSeg" role="group" aria-label="사진 배치">
+        <button type="button" data-fit="contain" class="on">여백 (블러 배경)</button>
+        <button type="button" data-fit="cover">꽉 채우기 (자르기)</button>
+      </div>
+      <label class="ctl"><span>상단 자르기</span><b id="trimTopVal">0%</b>
+        <input type="range" id="trimTop" min="0" max="30" step="1" value="0">
+      </label>
+      <label class="ctl"><span>하단 자르기</span><b id="trimBottomVal">0%</b>
+        <input type="range" id="trimBottom" min="0" max="30" step="1" value="0">
+      </label>
+      <p class="hint">사진 위아래 흰 여백·캡션을 잘라낼 때 써요. (원본 파일은 그대로)</p>
+    </div>
+
+    <div class="card">
+      <h2>텍스트</h2>
+      <div class="seg wrap" id="textSeg" role="group" aria-label="텍스트 모드">
+        <button type="button" data-text="none">없음</button>
+        <button type="button" data-text="thumb" class="on">썸네일</button>
+        <button type="button" data-text="comment">1줄 코멘트</button>
+      </div>
+
+      <div data-when="thumb">
+        <label class="field"><span>제목 1줄</span>
+          <input type="text" id="title1" maxlength="30" placeholder="예: 포장지가 [말을 걸어옴]" value="">
+        </label>
+        <label class="field"><span>제목 2줄</span>
+          <input type="text" id="title2" maxlength="30" placeholder="예: 안에 이런 게">
+        </label>
+        <label class="field"><span>서브 1줄</span>
+          <input type="text" id="sub" maxlength="48" placeholder="예: 2026 · 짤 모음">
+        </label>
+        <label class="field"><span>강조 단어</span>
+          <input type="text" id="hlWords" maxlength="60" placeholder="쉼표로 구분 · 대괄호 없이도 포인트 색">
+        </label>
+        <p class="hint"><b>[단어]</b>처럼 대괄호로 감싸도, 위 강조 단어에 적어도 그 부분만 포인트 색이 됩니다.</p>
+      </div>
+
+      <div data-when="comment" hidden>
+        <label class="field"><span>한 줄 코멘트</span>
+          <input type="text" id="comment" maxlength="40" placeholder="예: 이건 진짜 웃기다">
+        </label>
+      </div>
+
+      <label class="ctl"><span>글자 크기</span><b id="scaleVal">100%</b>
+        <input type="range" id="scale" min="70" max="130" step="2" value="100">
+      </label>
+      <label class="ctl"><span>스크림 높이</span><b id="scrimVal">52%</b>
+        <input type="range" id="scrim" min="20" max="90" step="1" value="52">
+      </label>
+      <label class="ctl"><span>스크림 진하기</span><b id="scrimOpacityVal">90%</b>
+        <input type="range" id="scrimOpacity" min="0" max="100" step="1" value="90">
+      </label>
+    </div>
+
+    <div class="card">
+      <h2>효과 <small>외곽선 · 그림자</small></h2>
+      <div class="toggle-row">
+        <label class="switch"><input type="checkbox" id="strokeOn" checked><span></span>외곽선</label>
+        <b id="strokeWidthVal" class="mini">4px</b>
+      </div>
+      <input type="range" id="strokeWidth" min="0" max="12" step="1" value="4" aria-label="외곽선 두께">
+      <div class="toggle-row">
+        <label class="switch"><input type="checkbox" id="shadowOn" checked><span></span>그림자</label>
+        <b id="shadowVal" class="mini">14px</b>
+      </div>
+      <label class="ctl tight"><span>그림자 번짐</span>
+        <input type="range" id="shadowBlur" min="0" max="40" step="1" value="14">
+      </label>
+      <label class="ctl tight"><span>그림자 아래로</span>
+        <input type="range" id="shadowY" min="0" max="24" step="1" value="8">
+      </label>
+      <label class="ctl tight"><span>그림자 진하기</span><b id="shadowOpacityVal">55%</b>
+        <input type="range" id="shadowOpacity" min="0" max="100" step="1" value="55">
+      </label>
+      <p class="hint">썸네일 문구는 기본으로 검은 외곽선 + 그림자가 켜져 있어요.</p>
+    </div>
+
+    <div class="card">
+      <h2>포인트 색</h2>
+      <div class="swatches" id="swatches">
+        <button type="button" data-color="#C084FC" class="on" title="라일락" style="--c:#C084FC"></button>
+        <button type="button" data-color="#60A5FA" title="스카이블루" style="--c:#60A5FA"></button>
+        <button type="button" data-color="#34D399" title="민트" style="--c:#34D399"></button>
+        <button type="button" data-color="#FBBF24" title="골드" style="--c:#FBBF24"></button>
+        <button type="button" data-color="#F87171" title="레드" style="--c:#F87171"></button>
+        <label class="custom-color" title="직접 고르기">
+          <input type="color" id="accentPicker" value="#C084FC">
+          <span>직접</span>
+        </label>
+      </div>
+      <code id="accentHex">#C084FC</code>
+    </div>
+  </section>
+
+  <!-- ══════════ 아웃트로 패널 ══════════ -->
+  <section class="controls" id="panelOutro" aria-label="아웃트로 카드 설정" hidden>
+    <div class="card">
+      <h2>아웃트로 카드 <small>1080 × 1080</small></h2>
+      <label class="field"><span>상단 브랜드명</span>
+        <input type="text" id="oBrand" maxlength="40" value="SINGULBUNGUL ANIMAL VILLAGE">
+      </label>
+      <label class="field"><span>우측 라벨</span>
+        <input type="text" id="oLabel" maxlength="24" value="오늘의 짤 / END">
+      </label>
+      <label class="field"><span>타이틀 1줄</span>
+        <input type="text" id="oTitle1" maxlength="30" value="오늘의 짤,">
+      </label>
+      <label class="field"><span>타이틀 2줄 <em>포인트 색</em></span>
+        <input type="text" id="oTitle2" maxlength="30" value="이렇게 정리!">
+      </label>
+    </div>
+    <div class="card">
+      <h2>요약 3줄</h2>
+      <label class="field"><span>01</span><input type="text" id="oItem1" maxlength="52" value="시골 전통시장 가격 표지판 모음"></label>
+      <label class="field"><span>02</span><input type="text" id="oItem2" maxlength="52" value="차매·퀴이·잠홍·아복하도까지 오타 대잔치"></label>
+      <label class="field"><span>03</span><input type="text" id="oItem3" maxlength="52" value="짤 속 과일 보관 용기는 프로필 링크 028번"></label>
+    </div>
+    <div class="card">
+      <h2>마무리 문구</h2>
+      <label class="field"><span>CTA 1줄</span><input type="text" id="oCta1" maxlength="30" value="재밌게 보셨다면"></label>
+      <label class="field"><span>CTA 2줄</span><input type="text" id="oCta2" maxlength="30" value="좋아요와 팔로우!"></label>
+      <label class="field"><span>채널 1</span><input type="text" id="oCh1" maxlength="40" value="YouTube 싱글벙글 동물촌"></label>
+      <label class="field"><span>채널 2</span><input type="text" id="oCh2" maxlength="40" value="TikTok @animallolvillage"></label>
+      <label class="field"><span>하단 문구</span><input type="text" id="oFoot" maxlength="48" value="프로필 링크에서 짤 속 아이템 모아보기"></label>
+    </div>
+    <div class="card">
+      <h2>포인트 색</h2>
+      <div class="swatches" id="swatchesOutro">
+        <button type="button" data-color="#C084FC" class="on" title="라일락" style="--c:#C084FC"></button>
+        <button type="button" data-color="#60A5FA" title="스카이블루" style="--c:#60A5FA"></button>
+        <button type="button" data-color="#34D399" title="민트" style="--c:#34D399"></button>
+        <button type="button" data-color="#FBBF24" title="골드" style="--c:#FBBF24"></button>
+        <button type="button" data-color="#F87171" title="레드" style="--c:#F87171"></button>
+        <label class="custom-color" title="직접 고르기">
+          <input type="color" id="accentPickerOutro" value="#C084FC">
+          <span>직접</span>
+        </label>
+      </div>
+      <p class="hint">1:1 카드와 같은 색을 씁니다.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>사진은 브라우저 안에서만 처리되고 어디로도 전송되지 않습니다.</span>
+  <span id="fontState">폰트 준비 중…</span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>
