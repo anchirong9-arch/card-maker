@@ -484,24 +484,24 @@
 
     const t1 = (S.outro.title1 || '').trim();
     const t2 = (S.outro.title2 || '').trim();
-    if (t1) y += text(t1, pad, y, 64, 900, F_NOTO, MAIN, W - pad * 2) * 1.34;
-    if (t2) y += text(t2, pad, y, 64, 900, F_NOTO, S.accent, W - pad * 2) * 1.34;
+    if (t1) y += text(t1, pad, y, 70, 900, F_NOTO, MAIN, W - pad * 2) * 1.32;
+    if (t2) y += text(t2, pad, y, 70, 900, F_NOTO, S.accent, W - pad * 2) * 1.32;
     y += 24;
 
     const nums = ['01', '02', '03'];
     const list = [S.outro.item1, S.outro.item2, S.outro.item3];
     for (let i = 0; i < 3; i++) {
       const desc = (list[i] || '').trim();
-      text(nums[i], pad, y + 3, 29, 700, F_NOTO, S.accent, 60);
-      if (desc) text(desc, pad + 64, y, 31, 400, F_NOTO, '#E5E7EB', W - pad * 2 - 64);
-      y += 54;
-      g.strokeStyle = '#23252B'; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(pad, y + 14); g.lineTo(W - pad, y + 14); g.stroke();
-      y += 30;
+      text(nums[i], pad, y + 3, 30, 700, F_NOTO, S.accent, 60);
+      if (desc) text(desc, pad + 66, y, 32, 400, F_NOTO, '#E5E7EB', W - pad * 2 - 66);
+      y += 56;
+      g.strokeStyle = '#2E323D'; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(pad, y + 12); g.lineTo(W - pad, y + 12); g.stroke();
+      y += 28;
     }
     y += 34;
 
-    const ctaSize = 46;
+    const ctaSize = 48;
     if (S.outro.cta1) y += text(S.outro.cta1, pad, y, ctaSize, 900, F_NOTO, MAIN, W - pad * 2) * 1.22;
     if (S.outro.cta2) y += text(S.outro.cta2, pad, y, ctaSize, 900, F_NOTO, MAIN, W - pad * 2) * 1.22;
     y += 30;
@@ -518,7 +518,7 @@
         const pw = g.measureText(plat).width;
         text(handle, pad + Math.max(190, pw + 40), y, 28, 400, F_NOTO, SUB, W - pad * 2 - 210);
       }
-      y += 42;
+      y += 44;
     }
 
     const fy = H - 88;
