@@ -116,6 +116,37 @@
     return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
   }
 
+  /* 캔버스에서 웹폰트 굵기(weight)가 실제로 구분되는지 확인한다.
+     구분되지 않으면 같은 색으로 살짝 덧그려 굵기를 흉내 낸다(합성 볼드). */
+  let synthBold = false;
+  function detectSyntheticBold() {
+    try {
+      const c = document.createElement('canvas');
+      c.width = 160; c.height = 120;
+      const g = c.getContext('2d');
+      const ink = (weight) => {
+        g.clearRect(0, 0, 160, 120);
+        g.fillStyle = '#fff'; g.fillRect(0, 0, 160, 120);
+        g.fillStyle = '#000';
+        g.font = `${weight} 84px "Noto Sans KR"`;
+        g.fillText('짤', 8, 96);
+        const d = g.getImageData(0, 0, 160, 120).data;
+        let n = 0;
+        for (let i = 0; i < d.length; i += 4) if (d[i] < 128) n++;
+        return n;
+      };
+      synthBold = ink(400) === ink(900);
+    } catch (e) { synthBold = false; }
+    return synthBold;
+  }
+
+  function boldFactor(weight) {
+    if (!synthBold || weight < 600) return 0;
+    if (weight >= 900) return 0.042;
+    if (weight >= 800) return 0.032;
+    return 0.021;
+  }
+
   function roundRect(g, x, y, w, h, r) {
     const rr = Math.min(r, w / 2, h / 2);
     g.beginPath();
@@ -263,7 +294,16 @@
         g.shadowBlur = 0;
         g.shadowOffsetY = 0;
       }
-      g.fillStyle = s.a ? S.accent : opt.color;
+      const segColor = s.a ? S.accent : opt.color;
+      const bf = boldFactor(weight);
+      if (bf > 0) {
+        g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetY = 0;
+        g.lineJoin = 'round';
+        g.strokeStyle = segColor;
+        g.lineWidth = size * bf;
+        g.strokeText(s.t, cx, y);
+      }
+      g.fillStyle = segColor;
       g.fillText(s.t, cx, y);
       g.restore();
       cx += g.measureText(s.t).width;
@@ -467,9 +507,16 @@
         s -= 1;
         g.font = `${weight} ${s}px ${family}`;
       }
-      g.fillStyle = color;
       g.textBaseline = 'top';
       g.textAlign = align || 'left';
+      const bf = boldFactor(weight);
+      if (bf > 0) {
+        g.lineJoin = 'round';
+        g.strokeStyle = color;
+        g.lineWidth = s * bf;
+        g.strokeText(str, x, yy);
+      }
+      g.fillStyle = color;
       g.fillText(str, x, yy);
       g.textAlign = 'left';
       return s;
@@ -807,10 +854,11 @@
       document.fonts.load('700 64px "Noto Sans KR"', KO),
       document.fonts.load('900 64px "Noto Sans KR"', KO)
     ]).then(() => document.fonts.ready).then(() => {
-      fontsReady = document.fonts.check('900 70px "Noto Sans KR"', '짤')
-        && document.fonts.check('400 70px "Black Han Sans"', '짤');
+      const hasBlack = document.fonts.check('400 70px "Black Han Sans"', '짤');
+      detectSyntheticBold();
+      fontsReady = hasBlack;
       fs.classList.remove('wait');
-      fs.textContent = fontsReady ? '폰트 준비 완료' : '일부 폰트 대체됨';
+      fs.textContent = hasBlack ? '폰트 준비 완료' : '일부 폰트 대체됨';
       render();
     }).catch(() => {
       fs.textContent = '기본 폰트로 표시';
