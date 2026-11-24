@@ -464,6 +464,20 @@
     if (S.textMode !== 'none') drawBarText(g, m.winTop, m.winH);
   }
 
+  /* 글자 잉크가 'top' 기준 y에서 얼마나 아래에서 시작하는지(패딩)와 잉크 높이.
+     em 박스 대신 실제 잉크 기준으로 세로 가운데를 맞추는 데 쓴다. */
+  function inkBox(g, text, size, weight, family) {
+    g.save();
+    g.font = `${weight} ${size}px ${family}`;
+    g.textBaseline = 'alphabetic';
+    const m = g.measureText(text || '한');
+    g.restore();
+    const fb = m.fontBoundingBoxAscent || size * 0.88;
+    const asc = m.actualBoundingBoxAscent || size * 0.72;
+    const desc = m.actualBoundingBoxDescent || 0;
+    return { pad: Math.max(0, fb - asc), h: asc + desc };
+  }
+
   /* 검정 창 가운데: 굵은 기울임 두 줄(+서브 한 줄) */
   function drawBarText(g, top, height) {
     const k = clamp(S.scale, 60, 160) / 100;
@@ -479,12 +493,9 @@
     const fontOf = (size) => `400 ${size}px ${F_BLACK}`;
     const size = fitSize(g, lines, fontOf, maxW, Math.round(132 * k), Math.round(34 * k));
     const lh = size * 1.14;
-    const titleH = lines.length * lh;
 
     const subSize = Math.round(40 * k);
     const subGap = 24 * k;
-    const subH = subText ? subSize * 1.2 : 0;
-    const blockH = titleH + (subText ? subGap + subH : 0);
 
     const opt = {
       ...effects(),
@@ -493,8 +504,14 @@
     };
     const shear = S.skewOn ? -Math.tan((BAR_SKEW * Math.PI) / 180) : 0;  // 음수 = 오른쪽으로 기움
 
-    const blockTop = top + Math.max(8, (height - blockH) / 2);
-    let y = blockTop;
+    // 실제 잉크 기준으로 세로 가운데 정렬
+    const titleInk = inkBox(g, lines.length ? lines[0].map(s => s.t).join('') : '한', size, 400, F_BLACK);
+    const titleInkH = lines.length ? (lines.length - 1) * lh + titleInk.h : 0;
+    const subInk = subText ? inkBox(g, subText, subSize, 500, F_NOTO) : null;
+    const visualH = titleInkH + (subInk ? subGap + subInk.h : 0);
+
+    const inkTop = top + Math.max(8, (height - visualH) / 2);
+    let y = inkTop - titleInk.pad;
     for (const segs of lines) {
       g.font = `400 ${size}px ${F_BLACK}`;
       const tw = measure(g, segs);
@@ -513,7 +530,7 @@
       y += lh;
     }
 
-    if (subText) {
+    if (subText && subInk) {
       const subOpt = {
         ...effects(),
         color: '#DCE0E8',
@@ -523,7 +540,7 @@
       g.font = `500 ${subSize}px ${F_NOTO}`;
       const sw = g.measureText(subText).width;
       drawLine(g, [{ t: subText, a: false }], (W - sw) / 2,
-        blockTop + titleH + subGap,
+        inkTop + titleInkH + subGap - subInk.pad,
         subSize, 500, F_NOTO, subOpt);
     }
   }
