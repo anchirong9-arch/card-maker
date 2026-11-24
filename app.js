@@ -71,7 +71,7 @@
     simpleScale: 100,
     simpleBottom: 96,
     simpleStroke: true,
-    simpleStrokeW: 3,
+    simpleStrokeW: 4,
     simpleShadow: true,
     simpleChSize: 25,
     simpleChGap: 56,
@@ -1043,9 +1043,10 @@
     if (h <= 0 || o <= 0) return;
     const grd = g.createLinearGradient(0, H - h, 0, H);
     grd.addColorStop(0, 'rgba(0,0,0,0)');
-    grd.addColorStop(0.42, `rgba(0,0,0,${o * 0.42})`);
-    grd.addColorStop(0.74, `rgba(0,0,0,${o * 0.80})`);
-    grd.addColorStop(1, `rgba(0,0,0,${Math.min(1, o * 0.98)})`);
+    grd.addColorStop(0.25, `rgba(0,0,0,${o * 0.22})`);
+    grd.addColorStop(0.50, `rgba(0,0,0,${o * 0.50})`);
+    grd.addColorStop(0.75, `rgba(0,0,0,${o * 0.78})`);
+    grd.addColorStop(1, `rgba(0,0,0,${Math.min(1, o * 0.97)})`);
     g.fillStyle = grd;
     g.fillRect(0, H - h, W, h);
   }
