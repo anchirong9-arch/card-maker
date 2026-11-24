@@ -7,6 +7,8 @@
   const W = 1080, H = 1080;
   const F_BLACK = '"Black Han Sans", "Noto Sans KR", sans-serif';
   const F_NOTO = '"Noto Sans KR", -apple-system, "Malgun Gothic", sans-serif';
+  const BAR_BG = '#070c08';    // 하단 검정창 바탕
+  const BAR_SKEW = 11;         // 기울임 각도(도)
 
   const $ = (id) => document.getElementById(id);
   const canvas = $('stageCanvas');
@@ -14,6 +16,10 @@
   /* ───────── 상태 ───────── */
   const S = {
     tab: 'card',
+    layout: 'blur',      // 'blur' = 1:1 블러 카드, 'bar' = 하단 검정창
+    barPct: 33,          // 검정창이 차지하는 높이(%)
+    skewOn: true,        // 제목 오른쪽 기울임
+    barGapOn: true,      // 사진과 검정창 사이 흰 구분선
     blur: 28,
     dark: 35,
     fit: 'contain',
@@ -48,6 +54,7 @@
       cta2: '좋아요와 팔로우!',
       ch1: 'YouTube 싱글벙글 동물촌',
       ch2: 'TikTok @animallolvillage',
+      ch3: '리틀리 litt.ly/anchirong',
       foot: '프로필 링크에서 짤 속 아이템 모아보기'
     }
   };
@@ -376,6 +383,27 @@
     g.restore();
   }
 
+  /* 사진을 지정한 사각형 안에 배치한다 (하단 검정창 모드의 상단 영역).
+     trimTop/trimBottom 으로 원본에서 쓸 부분을 먼저 정하고, 그 부분을 cover 로 꽉 채운다. */
+  function drawPhotoRect(g, img, dx, dy, dw, dh, trimTop, trimBottom, fit) {
+    const t = clamp(trimTop, 0, 45) / 100, b = clamp(trimBottom, 0, 45) / 100;
+    const sy = img.height * t;
+    const srcH = Math.max(8, img.height * (1 - t - b));
+    const srcW = img.width;
+    const sc = (fit === 'contain')
+      ? Math.min(dw / srcW, dh / srcH)
+      : Math.max(dw / srcW, dh / srcH);
+    const ow = srcW * sc, oh = srcH * sc;
+    g.save();
+    g.beginPath();
+    g.rect(dx, dy, dw, dh);
+    g.clip();
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(img, 0, sy, srcW, srcH, dx + (dw - ow) / 2, dy + (dh - oh) / 2, ow, oh);
+    g.restore();
+  }
+
   function drawScrim(g, heightPct, opacityPct) {
     const h = H * clamp(heightPct, 0, 100) / 100;
     const o = clamp(opacityPct, 0, 100) / 100;
@@ -391,6 +419,7 @@
 
   /* ───────── ① 카드 ───────── */
   function drawCard(g, img) {
+    if (S.layout === 'bar') { drawBarCard(g, img); return; }
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, W, H);
     g.fillStyle = '#0d0e12';
@@ -403,6 +432,99 @@
       drawScrim(g, S.scrim, S.scrimOpacity);
       if (S.textMode === 'thumb') drawThumbText(g);
       else drawCommentText(g);
+    }
+  }
+
+  /* ───────── ①-b 하단 검정창 ───────── */
+  function barMetrics() {
+    const barH = Math.round(H * clamp(S.barPct, 10, 55) / 100);
+    const gap = S.barGapOn ? Math.round(H * 0.022) : 0;   // 사진과 창 사이 흰 줄
+    const photoH = H - barH;
+    return { barH, gap, photoH, winTop: photoH + gap, winH: barH - gap };
+  }
+
+  function drawBarCard(g, img) {
+    const m = barMetrics();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = '#0d0e12';
+    g.fillRect(0, 0, W, H);
+
+    // 위쪽: 사진이 가로로 꽉 차게
+    drawPhotoRect(g, img, 0, 0, W, m.photoH, S.trimTop, S.trimBottom, 'cover');
+
+    if (m.gap > 0) {
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, m.photoH, W, m.gap);
+    }
+
+    g.fillStyle = BAR_BG;
+    g.fillRect(0, m.winTop, W, m.winH);
+
+    if (S.textMode !== 'none') drawBarText(g, m.winTop, m.winH);
+  }
+
+  /* 검정 창 가운데: 굵은 기울임 두 줄(+서브 한 줄) */
+  function drawBarText(g, top, height) {
+    const k = clamp(S.scale, 60, 160) / 100;
+    const lines = [S.title1, S.title2]
+      .map(t => (t || '').trim())
+      .filter(Boolean)
+      .map(t => segments(t, S.hlWords));
+    const subText = (S.sub || '').trim();
+    if (!lines.length && !subText) return;
+
+    const padX = 54;
+    const maxW = W - padX * 2;
+    const fontOf = (size) => `400 ${size}px ${F_BLACK}`;
+    const size = fitSize(g, lines, fontOf, maxW, Math.round(132 * k), Math.round(34 * k));
+    const lh = size * 1.14;
+    const titleH = lines.length * lh;
+
+    const subSize = Math.round(40 * k);
+    const subGap = 24 * k;
+    const subH = subText ? subSize * 1.2 : 0;
+    const blockH = titleH + (subText ? subGap + subH : 0);
+
+    const opt = {
+      ...effects(),
+      color: '#ffffff',
+      strokeWidth: Math.min(28, Math.round(S.strokeWidth * 1.9))
+    };
+    const shear = S.skewOn ? -Math.tan((BAR_SKEW * Math.PI) / 180) : 0;  // 음수 = 오른쪽으로 기움
+
+    const blockTop = top + Math.max(8, (height - blockH) / 2);
+    let y = blockTop;
+    for (const segs of lines) {
+      g.font = `400 ${size}px ${F_BLACK}`;
+      const tw = measure(g, segs);
+      const x = (W - tw) / 2;
+      if (shear) {
+        const cy = y + size / 2;
+        g.save();
+        g.translate(W / 2, cy);
+        g.transform(1, 0, shear, 1, 0, 0);
+        g.translate(-W / 2, -cy);
+        drawLine(g, segs, x, y, size, 400, F_BLACK, opt);
+        g.restore();
+      } else {
+        drawLine(g, segs, x, y, size, 400, F_BLACK, opt);
+      }
+      y += lh;
+    }
+
+    if (subText) {
+      const subOpt = {
+        ...effects(),
+        color: '#DCE0E8',
+        strokeWidth: Math.max(0, Math.round(S.strokeWidth * 0.9)),
+        shadowOpacity: effects().shadowOpacity * 0.8
+      };
+      g.font = `500 ${subSize}px ${F_NOTO}`;
+      const sw = g.measureText(subText).width;
+      drawLine(g, [{ t: subText, a: false }], (W - sw) / 2,
+        blockTop + titleH + subGap,
+        subSize, 500, F_NOTO, subOpt);
     }
   }
 
@@ -557,7 +679,7 @@
     if (S.outro.cta2) y += text(S.outro.cta2, pad, y, ctaSize, 900, F_NOTO, MAIN, W - pad * 2) * 1.22;
     y += 30 + extra * 0.10;
 
-    for (const ch of [S.outro.ch1, S.outro.ch2]) {
+    for (const ch of [S.outro.ch1, S.outro.ch2, S.outro.ch3]) {
       const raw = (ch || '').trim();
       if (!raw) continue;
       const sp = raw.indexOf(' ');
@@ -611,7 +733,7 @@
     if (canvas.height !== H) canvas.height = H;
     if (canvas.width !== W) canvas.width = W;
     $('stage').style.aspectRatio = '1 / 1';
-    $('dims').textContent = '1080 × 1080';
+    $('dims').textContent = S.layout === 'bar' ? '1080 × 1080 · 하단 검정창' : '1080 × 1080';
     if (active < 0 || !items[active]) {
       g.clearRect(0, 0, W, H);
       $('stageEmpty').hidden = false;
@@ -710,6 +832,10 @@
     $('strokeWidthVal').textContent = S.strokeWidth + 'px';
     $('shadowVal').textContent = S.shadowBlur + 'px';
     $('shadowOpacityVal').textContent = S.shadowOpacity + '%';
+    $('barPct').value = S.barPct;
+    $('barPctVal').textContent = S.barPct + '%';
+    $('skewOn').checked = S.skewOn;
+    $('barGapOn').checked = S.barGapOn;
 
     $('title1').value = S.title1;
     $('title2').value = S.title2;
@@ -719,7 +845,7 @@
 
     const map = [['oBrand', 'brand'], ['oLabel', 'label'], ['oTitle1', 'title1'], ['oTitle2', 'title2'],
       ['oItem1', 'item1'], ['oItem2', 'item2'], ['oItem3', 'item3'],
-      ['oCta1', 'cta1'], ['oCta2', 'cta2'], ['oCh1', 'ch1'], ['oCh2', 'ch2'], ['oFoot', 'foot']];
+      ['oCta1', 'cta1'], ['oCta2', 'cta2'], ['oCh1', 'ch1'], ['oCh2', 'ch2'], ['oCh3', 'ch3'], ['oFoot', 'foot']];
     for (const [id, key] of map) $(id).value = S.outro[key];
 
     document.querySelectorAll('#outroRatioSeg button').forEach(b =>
@@ -733,7 +859,26 @@
     document.querySelectorAll('#textSeg button').forEach(b => b.classList.toggle('on', b.dataset.text === S.textMode));
     document.querySelectorAll('#outroRatioSeg button').forEach(b => b.classList.toggle('on', b.dataset.ratio === S.outroRatio));
     document.querySelectorAll('[data-when]').forEach(el => { el.hidden = el.dataset.when !== S.textMode; });
+    applyLayoutUI();
     applyAccentUI();
+  }
+
+  /* 레이아웃(블러/하단 검정창)에 따라 보이는 컨트롤을 바꾼다 */
+  function applyLayoutUI() {
+    const bar = S.layout === 'bar';
+    document.querySelectorAll('#layoutSeg button').forEach(b =>
+      b.classList.toggle('on', b.dataset.layout === S.layout));
+    document.querySelectorAll('[data-when-layout]').forEach(el => {
+      el.hidden = el.dataset.whenLayout !== S.layout;
+    });
+    const cmt = document.querySelector('#textSeg button[data-text="comment"]');
+    if (cmt) cmt.hidden = bar;
+    if (bar && S.textMode === 'comment') {
+      S.textMode = 'thumb';
+      document.querySelectorAll('#textSeg button').forEach(b =>
+        b.classList.toggle('on', b.dataset.text === S.textMode));
+      document.querySelectorAll('[data-when]').forEach(el => { el.hidden = el.dataset.when !== S.textMode; });
+    }
   }
 
   function applyAccentUI() {
@@ -779,6 +924,20 @@
     bindRange('shadowBlur', 'shadowBlur', v => v + 'px');
     bindRange('shadowY', 'shadowY', v => v + 'px');
     bindRange('shadowOpacity', 'shadowOpacity', v => v + '%');
+    bindRange('barPct', 'barPct', v => v + '%');
+
+    $('skewOn').addEventListener('change', e => { S.skewOn = e.target.checked; save(); render(); });
+    $('barGapOn').addEventListener('change', e => { S.barGapOn = e.target.checked; save(); render(); });
+
+    document.querySelectorAll('#layoutSeg button').forEach(b =>
+      b.addEventListener('click', () => {
+        S.layout = b.dataset.layout;
+        applyLayoutUI();
+        save(); render();
+        note(S.layout === 'bar'
+          ? '하단 검정창 — 사진 위쪽 + 가운데 기울임 두 줄'
+          : '사진을 넣으면 바로 1:1 블러 카드가 만들어집니다.');
+      }));
 
     $('strokeOn').addEventListener('change', e => { S.strokeOn = e.target.checked; save(); render(); });
     $('shadowOn').addEventListener('change', e => { S.shadowOn = e.target.checked; save(); render(); });
@@ -786,7 +945,7 @@
     ['title1', 'title2', 'sub', 'hlWords', 'comment'].forEach(id => bindText(id, id, false));
     [['oBrand', 'brand'], ['oLabel', 'label'], ['oTitle1', 'title1'], ['oTitle2', 'title2'],
       ['oItem1', 'item1'], ['oItem2', 'item2'], ['oItem3', 'item3'],
-      ['oCta1', 'cta1'], ['oCta2', 'cta2'], ['oCh1', 'ch1'], ['oCh2', 'ch2'], ['oFoot', 'foot']
+      ['oCta1', 'cta1'], ['oCta2', 'cta2'], ['oCh1', 'ch1'], ['oCh2', 'ch2'], ['oCh3', 'ch3'], ['oFoot', 'foot']
     ].forEach(([id, key]) => bindText(id, key, true));
 
     document.querySelectorAll('#fitSeg button').forEach(b =>
@@ -885,7 +1044,7 @@
       render();
     });
 
-    window.__cm = { S, items, render, buildZipBlob, savePNG, saveZip, addFiles, setAccent, switchTab };
+    window.__cm = { S, items, render, buildZipBlob, savePNG, saveZip, addFiles, setAccent, switchTab, applyLayoutUI };
 
     // 탭 전환 시 컨트롤 상단으로 스크롤 (모바일)
     function toEndAnchor() {
