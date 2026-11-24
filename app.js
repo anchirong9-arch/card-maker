@@ -82,6 +82,8 @@
         if (d[k] !== undefined) S[k] = d[k];
       }
       if (d.outro) Object.assign(S.outro, d.outro);
+      // 예전 기본값(영어 헤더)만 국문 브랜드로 옮긴다 — 미니멀 카드는 영어 헤더를 쓰지 않음
+      if (S.outro.brand === 'SINGULBUNGUL ANIMAL VILLAGE') S.outro.brand = '싱글벙글 동물촌';
     } catch (e) { /* 무시 */ }
   }
 
