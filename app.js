@@ -1186,6 +1186,28 @@
     g.restore();
   }
 
+  /* 잉크 위변 맞춤 + 합성 굵기(웹폰트가 weight 를 구분하지 못할 때 같은 색 테두리로 굵게) */
+  function textInkS(g, x, inkTop, s, font, fill, strokeW) {
+    if (s === '' || s == null) return;
+    g.save();
+    g.font = font;
+    g.textBaseline = 'alphabetic';
+    g.textAlign = 'left';
+    const m = g.measureText(s);
+    const asc = m.actualBoundingBoxAscent || 0;
+    const left = m.actualBoundingBoxLeft || 0;
+    if (strokeW > 0) {
+      g.lineJoin = 'round';
+      g.miterLimit = 2;
+      g.lineWidth = strokeW;
+      g.strokeStyle = fill;
+      g.strokeText(s, x + left, inkTop + asc);
+    }
+    g.fillStyle = fill;
+    g.fillText(s, x + left, inkTop + asc);
+    g.restore();
+  }
+
   /* 가운데 정렬 — 잉크 폭 기준 */
   function textInkCenter(g, inkTop, s, font, opt) {
     if (!s) return;
@@ -1456,7 +1478,7 @@
     hline(g, pad, W - pad, dividerY, WH.edge, 2);
 
     let y = dividerY + above;
-    textInk(g, pad, y, label, labelFont, WH.main, true);
+    textInkS(g, pad, y, label, labelFont, WH.main, 30 * boldFactor(600));
     y += labelInk.h + labelGap;
 
     for (const r of rows) {
@@ -1517,7 +1539,8 @@
 
     // 글 제목 · 메타
     const tSize = fitFontSize(g, [c.title], fontOf, 47, W - pad * 2, 34);
-    textInk(g, pad, 136, c.title, fontOf(tSize), WH.main, true);
+    const bfB = boldFactor(600);      // 웹폰트가 weight 를 구분하지 못하는 환경 보정
+    textInkS(g, pad, 136, c.title, fontOf(tSize), WH.main, tSize * bfB);
 
     const metaTop = 136 + tSize + 18;
     textInk(g, pad, metaTop, c.meta, fontOf(25), WH.sub);
@@ -1547,11 +1570,11 @@
     // 상품 텍스트
     const tx = px + box + 38, avail = W - pad - tx;
     const nSize = fitFontSize(g, [c.name1, c.name2], fontOf, 36, avail, 24);
-    textInk(g, tx, py + 2, c.name1, fontOf(nSize), WH.main, true);
-    textInk(g, tx, py + 2 + nSize + 6, c.name2, fontOf(nSize), WH.main, true);
+    textInkS(g, tx, py + 2, c.name1, fontOf(nSize), WH.main, nSize * bfB);
+    textInkS(g, tx, py + 2 + nSize + 6, c.name2, fontOf(nSize), WH.main, nSize * bfB);
 
     const priceY = py + 2 + (nSize + 6) * 2 + 22;
-    textInk(g, tx, priceY, c.price, fontOf(58), WH.main, true);
+    textInkS(g, tx, priceY, c.price, fontOf(58), WH.main, 58 * bfB);
     textInk(g, tx, priceY + 78, c.sub1, fontOf(26), WH.sub);
     textInk(g, tx, priceY + 116, c.sub2, fontOf(26), WH.sub);
     hline(g, tx, W - pad, priceY + 166, WH.edge, 2);
