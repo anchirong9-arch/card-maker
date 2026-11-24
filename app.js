@@ -1443,6 +1443,11 @@
     g.restore();
   }
 
+  /* 화이트 카드 본문 — 웹폰트가 weight 를 구분하지 못하는 환경에서만 아주 얇게 보정 */
+  function whText(g, x, inkTop, s, size, fill) {
+    textInkS(g, x, inkTop, s, `400 ${size}px ${F_NOTO}`, fill, synthBold ? size * 0.02 : 0);
+  }
+
   /* 댓글 영역 — 카드 하단 기준으로 잉크 높이·대칭 패딩을 계산해 정중앙에 쌓는다.
      (build_card_white 의 draw_comments / THEME_LIGHT 와 같은 규격·같은 여백 프리셋) */
   function drawWhiteComments(g, minY, comments, label, fontOf) {
@@ -1492,8 +1497,8 @@
       g.restore();
       const inner = y + (boxH - (padY * 2 + alh + GAP + r.bh)) / 2 + padY;
       const ah = inkOf(g, r.au, authorFont).h;
-      textInk(g, pad + PAD_X, inner + alh - ah, r.au, authorFont, WH.sub);
-      textInk(g, pad + PAD_X, inner + alh + GAP, r.body, bodyFont, WH.main);
+      whText(g, pad + PAD_X, inner + alh - ah, r.au, 24, WH.sub);
+      whText(g, pad + PAD_X, inner + alh + GAP, r.body, bSize, WH.main);
       y += boxH + boxGap;
     }
   }
@@ -1531,11 +1536,11 @@
     g.strokeStyle = WH.pillEdge;
     g.stroke();
     g.restore();
-    textInk(g, pad + pillPadX, pillTop + (pillH - pi.h) / 2, c.pill, pillFont, WH.pillText);
+    whText(g, pad + pillPadX, pillTop + (pillH - pi.h) / 2, c.pill, 26, WH.pillText);
 
     const noFont = fontOf(28);
     const ni = inkOf(g, c.no, noFont);
-    textInk(g, W - pad - ni.w, pillTop + (pillH - ni.h) / 2, c.no, noFont, WH.muted);
+    whText(g, W - pad - ni.w, pillTop + (pillH - ni.h) / 2, c.no, 28, WH.muted);
 
     // 글 제목 · 메타
     const tSize = fitFontSize(g, [c.title], fontOf, 47, W - pad * 2, 34);
@@ -1543,7 +1548,7 @@
     textInkS(g, pad, 136, c.title, fontOf(tSize), WH.main, tSize * bfB);
 
     const metaTop = 136 + tSize + 18;
-    textInk(g, pad, metaTop, c.meta, fontOf(25), WH.sub);
+    whText(g, pad, metaTop, c.meta, 25, WH.sub);
     const divY = metaTop + 46;
     hline(g, pad, W - pad, divY, WH.edge, 2);
 
@@ -1575,16 +1580,16 @@
 
     const priceY = py + 2 + (nSize + 6) * 2 + 22;
     textInkS(g, tx, priceY, c.price, fontOf(58), WH.main, 58 * bfB);
-    textInk(g, tx, priceY + 78, c.sub1, fontOf(26), WH.sub);
-    textInk(g, tx, priceY + 116, c.sub2, fontOf(26), WH.sub);
+    whText(g, tx, priceY + 78, c.sub1, 26, WH.sub);
+    whText(g, tx, priceY + 116, c.sub2, 26, WH.sub);
     hline(g, tx, W - pad, priceY + 166, WH.edge, 2);
 
     const sSize = fitFontSize(g, [c.spec1, c.spec2], fontOf, 25, avail, 19);
-    textInk(g, tx, priceY + 182, c.spec1, fontOf(sSize), WH.spec);
-    textInk(g, tx, priceY + 220, c.spec2, fontOf(sSize), WH.spec);
+    whText(g, tx, priceY + 182, c.spec1, sSize, WH.spec);
+    whText(g, tx, priceY + 220, c.spec2, sSize, WH.spec);
 
     const rSize = fitFontSize(g, [c.review], fontOf, 24, avail, 18);
-    textInk(g, tx, priceY + 266, c.review, fontOf(rSize), WH.muted);
+    whText(g, tx, priceY + 266, c.review, rSize, WH.muted);
     const revBottom = priceY + 266 + 32;
 
     // 댓글 2개 (비워 둔 칸은 그리지 않음)
