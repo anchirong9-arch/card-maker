@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d0e12">
-<title>1:1 카드 메이커 · 블러 · 하단 검정창 · 마무리(라일락·동물촌)</title>
-<meta name="description" content="사진 한 장(또는 여러 장)을 1080×1080 카드로 — 블러 배경 카드, 하단 검정창 + 기울임 2줄 썸네일, 1줄 코멘트, 마무리(엔딩) 카드 라일락·동물촌 버전까지 브라우저에서 바로 만들고 PNG·ZIP으로 저장">
+<title>1:1 카드 메이커 · 블러 · 하단 검정창 · 마무리(라일락·동물촌·심플 엔딩)</title>
+<meta name="description" content="사진 한 장(또는 여러 장)을 1080×1080 카드로 — 블러 배경 카드, 하단 검정창 + 기울임 2줄 썸네일, 1줄 코멘트, 마무리(엔딩) 카드 라일락·동물촌·심플 엔딩 버전까지 브라우저에서 바로 만들고 PNG·ZIP으로 저장">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d0e12'/%3E%3Crect x='6' y='19' width='20' height='4' rx='2' fill='%23C084FC'/%3E%3Crect x='6' y='9' width='12' height='6' rx='2' fill='%23E9EAF0'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -19,7 +19,7 @@
     <span class="logo" aria-hidden="true"></span>
     <div class="brand-txt">
       <b>1:1 카드 메이커</b>
-      <small>1080×1080 · 썸네일 · 마무리 카드(라일락·동물촌) · PNG/ZIP</small>
+      <small>1080×1080 · 썸네일 · 마무리 카드(라일락·동물촌·심플 엔딩) · PNG/ZIP</small>
     </div>
   </div>
 
@@ -28,6 +28,7 @@
     <button type="button" role="tab" data-tab="outro" aria-selected="false">② 마무리(다크)</button>
     <button type="button" role="tab" data-tab="minimal" aria-selected="false">③ 마무리(라일락)</button>
     <button type="button" role="tab" data-tab="animal" aria-selected="false">④ 마무리(동물촌)</button>
+    <button type="button" role="tab" data-tab="simple" aria-selected="false">⑤ 심플 엔딩</button>
   </nav>
 </header>
 
@@ -273,6 +274,101 @@
       <p class="hint">1:1 카드와 같은 색을 씁니다.</p>
     </div>
   </section>
+
+  <!-- ══════════ ⑤ 심플 엔딩 패널 ══════════ -->
+  <section class="controls" id="panelSimple" aria-label="심플 엔딩 카드 설정" hidden>
+    <div class="card">
+      <h2>심플 엔딩 <small>1080 × 1080</small></h2>
+      <p class="hint"><b>심플 엔딩</b> — 사진을 1:1로 꽉 채우고, 아래쪽만 은은하게 어둡게 깐 뒤 <b>가운데 두 줄 문구</b>와 <b>오른쪽 아래 채널 태그</b>만 얹는 마지막 카드입니다. 사진이 없으면 <code>#111216</code> 어두운 바탕에 문구만으로도 만들 수 있어요.</p>
+    </div>
+
+    <div class="card">
+      <h2>사진</h2>
+      <div class="row">
+        <button type="button" class="btn" id="pickBtnS">사진 선택</button>
+        <button type="button" class="btn ghost" id="clearBtnS">모두 지우기</button>
+        <span class="muted" id="countTxtS">0장</span>
+      </div>
+      <p class="hint">여러 장을 한 번에 넣으면 같은 설정으로 <b>ZIP 일괄 저장</b>할 수 있어요.</p>
+      <input type="file" id="fileInputS" accept="image/*" multiple hidden>
+    </div>
+
+    <div class="card">
+      <h2>배경 &amp; 사진</h2>
+      <label class="ctl"><span>사진 흐림</span><b id="simpleBlurVal">0px</b>
+        <input type="range" id="simpleBlur" min="0" max="24" step="1" value="0">
+      </label>
+      <label class="ctl"><span>사진 어둡기</span><b id="simpleDarkVal">0%</b>
+        <input type="range" id="simpleDark" min="0" max="70" step="1" value="0">
+      </label>
+      <label class="ctl"><span>상단 자르기</span><b id="sTrimTopVal">0%</b>
+        <input type="range" id="sTrimTop" min="0" max="30" step="1" value="0">
+      </label>
+      <label class="ctl"><span>하단 자르기</span><b id="sTrimBottomVal">0%</b>
+        <input type="range" id="sTrimBottom" min="0" max="30" step="1" value="0">
+      </label>
+      <p class="hint">사진은 <b>꽉 채우기(cover)</b>로 들어갑니다. 위아래 흰 여백·캡션은 <b>자르기</b>로 잘라내고(① 카드와 같은 값), 아래 글씨가 묻히면 <b>사진 어둡기</b>로 눌러 주세요.</p>
+    </div>
+
+    <div class="card">
+      <h2>하단 그라데이션</h2>
+      <div class="toggle-row">
+        <label class="switch"><input type="checkbox" id="simpleGradOn" checked><span></span>하단 어둡게</label>
+        <b class="mini">기본 켜짐</b>
+      </div>
+      <div id="simpleGradCtl">
+        <label class="ctl"><span>높이</span><b id="simpleGradPctVal">38%</b>
+          <input type="range" id="simpleGradPct" min="20" max="65" step="1" value="38">
+        </label>
+        <label class="ctl"><span>진하기</span><b id="simpleGradDarkVal">90%</b>
+          <input type="range" id="simpleGradDark" min="0" max="100" step="1" value="90">
+        </label>
+      </div>
+      <p class="hint">아래 <b>35~40%</b>를 자연스럽게 검정으로 깔아 문구가 잘 읽히게 합니다. 사진이 이미 어두우면 진하기를 낮추거나 토글을 꺼 주세요.</p>
+    </div>
+
+    <div class="card">
+      <h2>문구 <small>아래 가운데</small></h2>
+      <label class="field"><span>1줄 <em>굵은 흰 글씨</em></span>
+        <input type="text" id="sLine1" maxlength="40" value="여러분은 어떻게 생각하시나요?">
+      </label>
+      <label class="field"><span>2줄</span>
+        <input type="text" id="sLine2" maxlength="40" value="댓글로 의견을 남겨주세요!">
+      </label>
+      <label class="ctl"><span>글자 크기</span><b id="simpleScaleVal">100%</b>
+        <input type="range" id="simpleScale" min="70" max="140" step="2" value="100">
+      </label>
+      <label class="ctl"><span>아래 여백</span><b id="simpleBottomVal">96px</b>
+        <input type="range" id="simpleBottom" min="40" max="280" step="4" value="96">
+      </label>
+      <div class="toggle-row">
+        <label class="switch"><input type="checkbox" id="simpleStroke" checked><span></span>검은 외곽선</label>
+        <b id="simpleStrokeVal" class="mini">3px</b>
+      </div>
+      <input type="range" id="simpleStrokeW" min="0" max="8" step="1" value="3" aria-label="외곽선 두께">
+      <div class="toggle-row">
+        <label class="switch"><input type="checkbox" id="simpleShadow" checked><span></span>그림자</label>
+        <b class="mini">부드럽게</b>
+      </div>
+      <p class="hint">칸을 <b>비우면 그 줄은 그려지지 않습니다.</b> 줄이 길면 카드 폭에 맞춰 자동으로 조금씩 작아져요.</p>
+    </div>
+
+    <div class="card">
+      <h2>채널 태그 <small>오른쪽 아래</small></h2>
+      <label class="field"><span>한 줄에 하나씩 <em>오른쪽 정렬</em></span>
+        <textarea id="sChans" rows="4">YouTube · 싱글벙글 동물촌
+TikTok · @animallolvillage
+리틀리 · litt.ly/anchirong</textarea>
+      </label>
+      <label class="ctl"><span>태그 크기</span><b id="simpleChSizeVal">25px</b>
+        <input type="range" id="simpleChSize" min="18" max="34" step="1" value="25">
+      </label>
+      <label class="ctl"><span>문구 위 간격</span><b id="simpleChGapVal">56px</b>
+        <input type="range" id="simpleChGap" min="16" max="220" step="4" value="56">
+      </label>
+      <p class="hint">맨 아래 문구보다 <b>조금 위</b>에 오른쪽 정렬로 쌓입니다(최대 6줄). 비우면 태그는 나오지 않아요.</p>
+    </div>
+  </section>
 </main>
 
 <footer class="foot">
@@ -283,6 +379,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

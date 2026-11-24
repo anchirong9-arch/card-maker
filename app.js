@@ -61,6 +61,24 @@
       ch2: 'TikTok @animallolvillage',
       ch3: '리틀리 litt.ly/anchirong',
       foot: '프로필 링크에서 짤 속 아이템 모아보기'
+    },
+    // ⑤ 심플 엔딩 — 사진 꽉 채우고 아래 가운데 두 줄 + 오른쪽 아래 채널 태그
+    simpleBlur: 0,
+    simpleDark: 0,
+    simpleGradOn: true,
+    simpleGradPct: 38,
+    simpleGradDark: 90,
+    simpleScale: 100,
+    simpleBottom: 96,
+    simpleStroke: true,
+    simpleStrokeW: 3,
+    simpleShadow: true,
+    simpleChSize: 25,
+    simpleChGap: 56,
+    simple: {
+      line1: '여러분은 어떻게 생각하시나요?',
+      line2: '댓글로 의견을 남겨주세요!',
+      chans: 'YouTube · 싱글벙글 동물촌\nTikTok · @animallolvillage\n리틀리 · litt.ly/anchirong'
     }
   };
 
@@ -83,10 +101,11 @@
       if (!raw) return;
       const d = JSON.parse(raw);
       for (const k of Object.keys(S)) {
-        if (k === 'tab' || k === 'outro') continue;
+        if (k === 'tab' || k === 'outro' || k === 'simple') continue;
         if (d[k] !== undefined) S[k] = d[k];
       }
       if (d.outro) Object.assign(S.outro, d.outro);
+      if (d.simple) Object.assign(S.simple, d.simple);
       // 예전 기본값(영어 헤더)만 국문 브랜드로 옮긴다 — 미니멀 카드는 영어 헤더를 쓰지 않음
       if (S.outro.brand === 'SINGULBUNGUL ANIMAL VILLAGE') S.outro.brand = '싱글벙글 동물촌';
     } catch (e) { /* 무시 */ }
@@ -227,10 +246,11 @@
       box.appendChild(b);
     });
     $('countTxt').textContent = `${items.length}장`;
-    const isOutroTab = S.tab === 'outro' || S.tab === 'minimal' || S.tab === 'animal';
-    $('stageEmpty').hidden = items.length > 0 || isOutroTab;
-    $('zipBtn').disabled = items.length === 0 || isOutroTab;
-    $('thumbs').style.display = S.tab === 'card' ? '' : 'none';
+    const isPhotoTab = S.tab === 'card' || S.tab === 'simple';
+    $('countTxtS').textContent = `${items.length}장`;
+    $('stageEmpty').hidden = items.length > 0 || !isPhotoTab;
+    $('zipBtn').disabled = items.length === 0 || !isPhotoTab;
+    $('thumbs').style.display = isPhotoTab ? '' : 'none';
   }
 
   /* ───────── 텍스트 조각(포인트 색) ───────── */
@@ -1012,6 +1032,139 @@
     g.fillText('END', px + 23, fy + 2);
   }
 
+  /* ───────── ⑤ 심플 엔딩 ───────── */
+  const SIMPLE_BG = '#111216';
+
+  /* 아래 35~40%를 자연스럽게 어둡게 — 사진 위 글씨 가독성 */
+  function drawSimpleGradient(g) {
+    if (!S.simpleGradOn) return;
+    const h = H * clamp(Number(S.simpleGradPct) || 0, 5, 100) / 100;
+    const o = clamp(Number(S.simpleGradDark) || 0, 0, 100) / 100;
+    if (h <= 0 || o <= 0) return;
+    const grd = g.createLinearGradient(0, H - h, 0, H);
+    grd.addColorStop(0, 'rgba(0,0,0,0)');
+    grd.addColorStop(0.42, `rgba(0,0,0,${o * 0.42})`);
+    grd.addColorStop(0.74, `rgba(0,0,0,${o * 0.80})`);
+    grd.addColorStop(1, `rgba(0,0,0,${Math.min(1, o * 0.98)})`);
+    g.fillStyle = grd;
+    g.fillRect(0, H - h, W, h);
+  }
+
+  /* 오른쪽 정렬 한 줄 — 얇은 검은 외곽선 + 부드러운 그림자 */
+  function drawSimpleTag(g, text, right, midY, size) {
+    g.save();
+    g.font = `700 ${size}px ${F_NOTO}`;
+    g.textAlign = 'right';
+    g.textBaseline = 'middle';
+    if (S.simpleShadow) {
+      g.shadowColor = 'rgba(0,0,0,.70)';
+      g.shadowBlur = Math.max(6, Math.round(size * 0.45));
+      g.shadowOffsetY = 2;
+    }
+    if (S.simpleStroke && S.simpleStrokeW > 0) {
+      g.lineJoin = 'round';
+      g.miterLimit = 2;
+      g.lineWidth = Math.max(2, S.simpleStrokeW * 1.4);
+      g.strokeStyle = 'rgba(0,0,0,.88)';
+      g.strokeText(text, right, midY);
+      g.shadowColor = 'transparent';
+      g.shadowBlur = 0;
+      g.shadowOffsetY = 0;
+    }
+    const bf = boldFactor(700);
+    if (bf > 0) {
+      g.lineJoin = 'round';
+      g.lineWidth = size * bf;
+      g.strokeStyle = '#ffffff';
+      g.strokeText(text, right, midY);
+    }
+    g.fillStyle = '#ffffff';
+    g.fillText(text, right, midY);
+    g.restore();
+  }
+
+  /* 1080×1080 — 사진 위 가운데 두 줄 문구 + 오른쪽 아래 채널 태그 */
+  function drawSimpleCard(g, img) {
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = SIMPLE_BG;
+    g.fillRect(0, 0, W, H);
+
+    // 사진: 1080×1080 꽉 채우기 (상·하단 자르기 적용)
+    if (img) {
+      const t = clamp(S.trimTop, 0, 45) / 100, b = clamp(S.trimBottom, 0, 45) / 100;
+      const sy = img.height * t;
+      const srcH = Math.max(8, img.height * (1 - t - b));
+      const sc = Math.max(W / img.width, H / srcH);
+      const dw = img.width * sc, dh = srcH * sc;
+      const blurPx = clamp(Number(S.simpleBlur) || 0, 0, 24);
+      g.save();
+      g.imageSmoothingEnabled = true;
+      g.imageSmoothingQuality = 'high';
+      if (blurPx > 0 && ctxFilterOK(g)) g.filter = `blur(${blurPx}px)`;
+      g.drawImage(img, 0, sy, img.width, srcH, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      g.restore();
+      const dim = clamp(Number(S.simpleDark) || 0, 0, 80) / 100;
+      if (dim > 0) {
+        g.fillStyle = `rgba(0,0,0,${dim})`;
+        g.fillRect(0, 0, W, H);
+      }
+    }
+
+    drawSimpleGradient(g);
+
+    // 가운데 두 줄
+    const k = clamp(S.simpleScale, 60, 160) / 100;
+    const l1 = (S.simple.line1 || '').trim();
+    const l2 = (S.simple.line2 || '').trim();
+    const maxW = W - 170;
+    const seg1 = [{ t: l1, a: false }], seg2 = [{ t: l2, a: false }];
+    const s1 = l1 ? fitSize(g, [seg1], (s) => `900 ${s}px ${F_NOTO}`, maxW, Math.round(52 * k), Math.round(24 * k)) : 0;
+    const s2 = l2 ? fitSize(g, [seg2], (s) => `600 ${s}px ${F_NOTO}`, maxW, Math.round(34 * k), Math.round(17 * k)) : 0;
+
+    const ink1 = l1 ? inkBox(g, l1, s1, 900, F_NOTO) : null;
+    const ink2 = l2 ? inkBox(g, l2, s2, 600, F_NOTO) : null;
+    const gap12 = Math.round(14 * k);
+    const blockH = (ink1 ? ink1.h : 0) + (ink1 && ink2 ? gap12 : 0) + (ink2 ? ink2.h : 0);
+
+    const bottomPad = clamp(Number(S.simpleBottom) || 0, 0, 400);
+    const blockTop = H - bottomPad - blockH;
+
+    const opt = {
+      strokeOn: !!S.simpleStroke,
+      strokeWidth: clamp(Number(S.simpleStrokeW) || 0, 0, 10),
+      shadowOn: !!S.simpleShadow,
+      shadowBlur: 16,
+      shadowY: 4,
+      shadowOpacity: 0.6,
+      color: '#ffffff'
+    };
+
+    if (l1) {
+      g.font = `900 ${s1}px ${F_NOTO}`;
+      const w = measure(g, seg1);
+      drawLine(g, seg1, (W - w) / 2, blockTop - ink1.pad, s1, 900, F_NOTO, opt);
+    }
+    if (l2) {
+      g.font = `600 ${s2}px ${F_NOTO}`;
+      const w = measure(g, seg2);
+      const y2 = blockTop + (ink1 ? ink1.h + gap12 : 0);
+      drawLine(g, seg2, (W - w) / 2, y2 - ink2.pad, s2, 600, F_NOTO, opt);
+    }
+
+    // 오른쪽 아래 채널 태그 (문구 블록보다 살짝 위)
+    const chans = (S.simple.chans || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
+    if (chans.length) {
+      const chSize = Math.round(clamp(Number(S.simpleChSize) || 25, 14, 40));
+      const lh = chSize * 1.5;
+      const chGap = clamp(Number(S.simpleChGap) || 0, 0, 300);
+      const chBottom = blockH > 0 ? blockTop - chGap : H - bottomPad;
+      let top = Math.max(28, chBottom - chans.length * lh);
+      const right = W - 64;
+      chans.forEach((line, i) => drawSimpleTag(g, line, right, top + i * lh + lh / 2, chSize));
+    }
+  }
+
   /* ───────── 렌더 ───────── */
   function render() {
     const g = canvas.getContext('2d');
@@ -1030,6 +1183,18 @@
         : S.tab === 'minimal'
           ? `1080 × ${OH} · 마무리(라일락)`
           : `1080 × ${OH} · 마무리(다크)`;
+      if (!fontsReady) note('폰트 불러오는 중…');
+      return;
+    }
+    if (S.tab === 'simple') {
+      if (canvas.height !== H) canvas.height = H;
+      if (canvas.width !== W) canvas.width = W;
+      $('stage').style.aspectRatio = '1 / 1';
+      drawSimpleCard(g, active >= 0 && items[active] ? items[active].img : null);
+      $('stageEmpty').hidden = true;
+      $('pngBtn').disabled = false;
+      $('zipBtn').disabled = items.length === 0;
+      $('dims').textContent = '1080 × 1080 · 심플 엔딩';
       if (!fontsReady) note('폰트 불러오는 중…');
       return;
     }
@@ -1052,12 +1217,14 @@
   /* ───────── 저장 ───────── */
   async function savePNG() {
     const outroTab = S.tab === 'outro' || S.tab === 'minimal' || S.tab === 'animal';
-    if (!outroTab && (active < 0 || !items[active])) { toast('먼저 사진을 넣어 주세요'); return null; }
+    const noPhotoOK = outroTab || S.tab === 'simple';   // ⑤는 사진 없이도 저장 가능
+    if (!noPhotoOK && (active < 0 || !items[active])) { toast('먼저 사진을 넣어 주세요'); return null; }
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     if (!blob) { toast('저장 실패 — 다시 시도해 주세요'); return null; }
     const name = S.tab === 'animal' ? `ending-dongmulchon-${stamp()}.png`
-      : S.tab === 'minimal' ? `minimal-${stamp()}.png`
-        : S.tab === 'outro' ? `outro-${stamp()}.png` : `card-${stamp()}.png`;
+      : S.tab === 'simple' ? `ending-simple-${stamp()}.png`
+        : S.tab === 'minimal' ? `minimal-${stamp()}.png`
+          : S.tab === 'outro' ? `outro-${stamp()}.png` : `card-${stamp()}.png`;
     download(blob, name);
     toast(`PNG 저장 · ${name}`);
     return { blob, name };
@@ -1065,10 +1232,11 @@
 
   async function buildZipBlob(onProgress) {
     const zip = new JSZip();
+    const drawOne = S.tab === 'simple' ? drawSimpleCard : drawCard;
     for (let i = 0; i < items.length; i++) {
       const c = document.createElement('canvas');
       c.width = W; c.height = H;
-      drawCard(c.getContext('2d'), items[i].img);
+      drawOne(c.getContext('2d'), items[i].img);
       const blob = await new Promise(r => c.toBlob(r, 'image/png'));
       zip.file(`${String(i + 1).padStart(2, '0')}_${safeName(items[i].name)}.png`, blob);
       if (onProgress) onProgress(i + 1, items.length);
@@ -1162,6 +1330,36 @@
       ['oCta1', 'cta1'], ['oCta2', 'cta2'], ['oCh1', 'ch1'], ['oCh2', 'ch2'], ['oCh3', 'ch3'], ['oFoot', 'foot']];
     for (const [id, key] of map) $(id).value = S.outro[key];
 
+    // ⑤ 심플 엔딩
+    $('simpleBlur').value = S.simpleBlur;
+    $('simpleBlurVal').textContent = S.simpleBlur + 'px';
+    $('simpleDark').value = S.simpleDark;
+    $('simpleDarkVal').textContent = S.simpleDark + '%';
+    $('simpleGradPct').value = S.simpleGradPct;
+    $('simpleGradPctVal').textContent = S.simpleGradPct + '%';
+    $('simpleGradDark').value = S.simpleGradDark;
+    $('simpleGradDarkVal').textContent = S.simpleGradDark + '%';
+    $('simpleScale').value = S.simpleScale;
+    $('simpleScaleVal').textContent = S.simpleScale + '%';
+    $('simpleBottom').value = S.simpleBottom;
+    $('simpleBottomVal').textContent = S.simpleBottom + 'px';
+    $('simpleStrokeW').value = S.simpleStrokeW;
+    $('simpleStrokeVal').textContent = S.simpleStrokeW + 'px';
+    $('simpleChSize').value = S.simpleChSize;
+    $('simpleChSizeVal').textContent = S.simpleChSize + 'px';
+    $('simpleChGap').value = S.simpleChGap;
+    $('simpleChGapVal').textContent = S.simpleChGap + 'px';
+    $('sTrimTop').value = S.trimTop;
+    $('sTrimTopVal').textContent = S.trimTop + '%';
+    $('sTrimBottom').value = S.trimBottom;
+    $('sTrimBottomVal').textContent = S.trimBottom + '%';
+    $('sLine1').value = S.simple.line1;
+    $('sLine2').value = S.simple.line2;
+    $('sChans').value = S.simple.chans;
+    $('simpleGradOn').checked = !!S.simpleGradOn;
+    $('simpleStroke').checked = !!S.simpleStroke;
+    $('simpleShadow').checked = !!S.simpleShadow;
+
     document.querySelectorAll('#outroRatioSeg button').forEach(b =>
       b.addEventListener('click', () => {
         S.outroRatio = b.dataset.ratio;
@@ -1175,7 +1373,16 @@
     document.querySelectorAll('[data-when]').forEach(el => { el.hidden = el.dataset.when !== S.textMode; });
     applyOutroUI();
     applyLayoutUI();
+    applySimpleUI();
     applyAccentUI();
+  }
+
+  /* ⑤ 심플 엔딩 — 토글에 따라 보이는 컨트롤 */
+  function applySimpleUI() {
+    if (!$('simpleGradCtl')) return;
+    $('simpleGradCtl').hidden = !S.simpleGradOn;
+    $('simpleStrokeW').hidden = !S.simpleStroke;
+    $('simpleStrokeVal').hidden = !S.simpleStroke;
   }
 
   /* 아웃트로 탭(마무리 다크 / 라일락 / 동물촌)에 따라 보이는 컨트롤을 바꾼다 */
@@ -1277,6 +1484,33 @@
       save(); render();
     });
 
+    /* ⑤ 심플 엔딩 */
+    bindRange('simpleBlur', 'simpleBlur', v => v + 'px');
+    bindRange('simpleDark', 'simpleDark', v => v + '%');
+    bindRange('simpleGradPct', 'simpleGradPct', v => v + '%');
+    bindRange('simpleGradDark', 'simpleGradDark', v => v + '%');
+    bindRange('simpleScale', 'simpleScale', v => v + '%');
+    bindRange('simpleBottom', 'simpleBottom', v => v + 'px');
+    bindRange('simpleStrokeW', 'simpleStrokeW', v => v + 'px');
+    bindRange('simpleChSize', 'simpleChSize', v => v + 'px');
+    bindRange('simpleChGap', 'simpleChGap', v => v + 'px');
+    // 사진 자르기는 ① 카드와 같은 값(같은 사진 위치)을 함께 쓴다
+    [['sTrimTop', 'trimTop'], ['sTrimBottom', 'trimBottom']].forEach(([id, key]) => {
+      $(id).addEventListener('input', () => {
+        S[key] = Number($(id).value);
+        $(id + 'Val').textContent = S[key] + '%';
+        $(key).value = S[key];
+        $(key + 'Val').textContent = S[key] + '%';
+        save(); render();
+      });
+    });
+    $('sLine1').addEventListener('input', e => { S.simple.line1 = e.target.value; save(); render(); });
+    $('sLine2').addEventListener('input', e => { S.simple.line2 = e.target.value; save(); render(); });
+    $('sChans').addEventListener('input', e => { S.simple.chans = e.target.value; save(); render(); });
+    $('simpleGradOn').addEventListener('change', e => { S.simpleGradOn = e.target.checked; applySimpleUI(); save(); render(); });
+    $('simpleStroke').addEventListener('change', e => { S.simpleStroke = e.target.checked; applySimpleUI(); save(); render(); });
+    $('simpleShadow').addEventListener('change', e => { S.simpleShadow = e.target.checked; save(); render(); });
+
     document.querySelectorAll('#layoutSeg button').forEach(b =>
       b.addEventListener('click', () => {
         S.layout = b.dataset.layout;
@@ -1326,11 +1560,15 @@
           x.setAttribute('aria-selected', x === b ? 'true' : 'false');
         });
         $('panelCard').hidden = S.tab !== 'card';
-        $('panelOutro').hidden = S.tab === 'card';
+        $('panelSimple').hidden = S.tab !== 'simple';
+        $('panelOutro').hidden = S.tab === 'card' || S.tab === 'simple';
         applyOutroUI();
+        applySimpleUI();
         renderThumbs();
         render();
-        note(S.tab === 'animal'
+        note(S.tab === 'simple'
+          ? '심플 엔딩 — 사진 위 가운데 두 줄 + 오른쪽 아래 채널 태그.'
+          : S.tab === 'animal'
           ? '마무리(동물촌) — 꽃밭 마을 배경 위 반투명 크림 카드. 텍스트만 바꿔 PNG 저장.'
           : S.tab === 'minimal'
             ? '마무리(라일락) — 브랜드 · 마무리 문구 · 채널 3줄만 가운데 정렬로.'
@@ -1342,16 +1580,22 @@
 
     $('pickBtn').addEventListener('click', () => $('fileInput').click());
     $('fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+    $('pickBtnS').addEventListener('click', () => $('fileInputS').click());
+    $('fileInputS').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
 
     const stage = $('stage');
-    stage.addEventListener('click', () => { if (!items.length && S.tab === 'card') $('fileInput').click(); });
+    stage.addEventListener('click', () => {
+      if (items.length) return;
+      if (S.tab === 'card') $('fileInput').click();
+      else if (S.tab === 'simple') $('fileInputS').click();
+    });
     ['dragenter', 'dragover'].forEach(ev =>
       stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add('drag'); }));
     ['dragleave', 'drop'].forEach(ev =>
       stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove('drag'); }));
     stage.addEventListener('drop', e => {
       if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-        if (S.tab !== 'card') switchTab('card');
+        if (S.tab !== 'card' && S.tab !== 'simple') switchTab('card');
         addFiles(e.dataTransfer.files);
       }
     });
@@ -1359,18 +1603,13 @@
       if (!e.clipboardData) return;
       const files = Array.from(e.clipboardData.files || []);
       if (files.length) {
-        if (S.tab !== 'card') switchTab('card');
+        if (S.tab !== 'card' && S.tab !== 'simple') switchTab('card');
         addFiles(files);
       }
     });
 
-    $('clearBtn').addEventListener('click', () => {
-      items.forEach(it => URL.revokeObjectURL(it.url));
-      items.length = 0;
-      active = -1;
-      renderThumbs(); render();
-      note('사진을 넣으면 바로 1:1 블러 카드가 만들어집니다.');
-    });
+    $('clearBtn').addEventListener('click', clearAll);
+    $('clearBtnS').addEventListener('click', clearAll);
 
     $('pngBtn').addEventListener('click', savePNG);
     $('zipBtn').addEventListener('click', saveZip);
@@ -1400,14 +1639,25 @@
       render();
     });
 
-    window.__cm = { S, items, render, buildZipBlob, savePNG, saveZip, addFiles, setAccent, switchTab, applyLayoutUI };
+    window.__cm = { S, items, render, buildZipBlob, savePNG, saveZip, addFiles, setAccent, switchTab, applyLayoutUI, applySimpleUI };
+
+    // 사진 비우기(① 카드 · ⑤ 심플 엔딩 공통)
+    function clearAll() {
+      items.forEach(it => URL.revokeObjectURL(it.url));
+      items.length = 0;
+      active = -1;
+      renderThumbs(); render();
+      note(S.tab === 'simple'
+        ? '사진 없이도 문구·채널 태그만으로 저장할 수 있어요.'
+        : '사진을 넣으면 바로 1:1 블러 카드가 만들어집니다.');
+    }
 
     // 탭 전환 시 컨트롤 상단으로 스크롤 (모바일)
     function toEndAnchor() {
-      if (window.matchMedia('(max-width: 980px)').matches) {
-        $('panelCard').hidden ? $('panelOutro').scrollIntoView({ behavior: 'smooth', block: 'start' })
-          : $('panelCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (!window.matchMedia('(max-width: 980px)').matches) return;
+      const el = S.tab === 'card' ? $('panelCard')
+        : S.tab === 'simple' ? $('panelSimple') : $('panelOutro');
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
