@@ -18,6 +18,7 @@
     tab: 'card',
     layout: 'blur',      // 'blur' = 1:1 블러 카드, 'bar' = 하단 검정창
     barPct: 33,          // 검정창이 차지하는 높이(%)
+    barFadeOn: true,     // 검정창 위쪽을 그라데이션으로 사진과 이어 붙이기
     skewOn: true,        // 제목 오른쪽 기울임
     barGapOn: true,      // 사진과 검정창 사이 흰 구분선
     blur: 28,
@@ -390,27 +391,6 @@
     g.restore();
   }
 
-  /* 사진을 지정한 사각형 안에 배치한다 (하단 검정창 모드의 상단 영역).
-     trimTop/trimBottom 으로 원본에서 쓸 부분을 먼저 정하고, 그 부분을 cover 로 꽉 채운다. */
-  function drawPhotoRect(g, img, dx, dy, dw, dh, trimTop, trimBottom, fit) {
-    const t = clamp(trimTop, 0, 45) / 100, b = clamp(trimBottom, 0, 45) / 100;
-    const sy = img.height * t;
-    const srcH = Math.max(8, img.height * (1 - t - b));
-    const srcW = img.width;
-    const sc = (fit === 'contain')
-      ? Math.min(dw / srcW, dh / srcH)
-      : Math.max(dw / srcW, dh / srcH);
-    const ow = srcW * sc, oh = srcH * sc;
-    g.save();
-    g.beginPath();
-    g.rect(dx, dy, dw, dh);
-    g.clip();
-    g.imageSmoothingEnabled = true;
-    g.imageSmoothingQuality = 'high';
-    g.drawImage(img, 0, sy, srcW, srcH, dx + (dw - ow) / 2, dy + (dh - oh) / 2, ow, oh);
-    g.restore();
-  }
-
   function drawScrim(g, heightPct, opacityPct) {
     const h = H * clamp(heightPct, 0, 100) / 100;
     const o = clamp(opacityPct, 0, 100) / 100;
@@ -457,16 +437,43 @@
     g.fillStyle = '#0d0e12';
     g.fillRect(0, 0, W, H);
 
-    // 위쪽: 사진이 가로로 꽉 차게
-    drawPhotoRect(g, img, 0, 0, W, m.photoH, S.trimTop, S.trimBottom, 'cover');
+    // 위쪽: 사진이 가로로 꽉 차게 — 아래 검정 영역 뒤로도 같은 배율로 이어 그린다
+    const t = clamp(S.trimTop, 0, 45) / 100, b = clamp(S.trimBottom, 0, 45) / 100;
+    const srcY = img.height * t;
+    const srcH = Math.max(8, img.height * (1 - t - b));
+    const srcW = img.width;
+    const sc = Math.max(W / srcW, m.photoH / srcH);
+    const ow = srcW * sc, oh = srcH * sc;
+    const dx = (W - ow) / 2, dy = (m.photoH - oh) / 2;
+    g.save();
+    g.beginPath();
+    g.rect(0, 0, W, H);
+    g.clip();
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(img, 0, srcY, srcW, srcH, dx, dy, ow, oh);
+    g.restore();
 
-    if (m.gap > 0) {
-      g.fillStyle = '#ffffff';
-      g.fillRect(0, m.photoH, W, m.gap);
+    if (S.barFadeOn) {
+      // 아래는 진한 검정 → 위로 갈수록 옅어지며 사진과 자연스럽게 이어짐
+      const fadeTop = Math.max(0, m.photoH - Math.round(m.barH * 0.55));
+      const grd = g.createLinearGradient(0, fadeTop, 0, H);
+      grd.addColorStop(0, 'rgba(7,12,8,0)');
+      grd.addColorStop(0.22, 'rgba(7,12,8,0.16)');
+      grd.addColorStop(0.40, 'rgba(7,12,8,0.44)');
+      grd.addColorStop(0.58, 'rgba(7,12,8,0.74)');
+      grd.addColorStop(0.76, 'rgba(7,12,8,0.92)');
+      grd.addColorStop(1, 'rgba(7,12,8,1)');
+      g.fillStyle = grd;
+      g.fillRect(0, fadeTop, W, H - fadeTop);
+    } else {
+      if (m.gap > 0) {
+        g.fillStyle = '#ffffff';
+        g.fillRect(0, m.photoH, W, m.gap);
+      }
+      g.fillStyle = BAR_BG;
+      g.fillRect(0, m.winTop, W, m.winH);
     }
-
-    g.fillStyle = BAR_BG;
-    g.fillRect(0, m.winTop, W, m.winH);
 
     if (S.textMode !== 'none') drawBarText(g, m.winTop, m.winH);
   }
@@ -506,6 +513,7 @@
 
     const opt = {
       ...effects(),
+      shadowOn: false,          // 검정 바탕 위라 그림자는 의미 없음
       color: '#ffffff',
       strokeWidth: Math.min(28, Math.round(S.strokeWidth * 1.9))
     };
@@ -540,9 +548,9 @@
     if (subText && subInk) {
       const subOpt = {
         ...effects(),
+        shadowOn: false,
         color: '#DCE0E8',
-        strokeWidth: Math.max(0, Math.round(S.strokeWidth * 0.9)),
-        shadowOpacity: effects().shadowOpacity * 0.8
+        strokeWidth: Math.max(0, Math.round(S.strokeWidth * 0.9))
       };
       g.font = `500 ${subSize}px ${F_NOTO}`;
       const sw = g.measureText(subText).width;
@@ -732,6 +740,9 @@
   animalBg.addEventListener('error', () => { animalBgReady = false; });
   animalBg.src = ANIMAL_BG_SRC;
 
+  // 같은 배경·흐림 값일 땐 유리·그림자 레이어를 다시 만들지 않는다(폰에서 슬라이더가 부드럽게)
+  const animalCache = { key: '', glass: null, shadow: null };
+
   /* 1080×1080 고정 — 3D 꽃밭 마을 배경 + 반투명 크림 카드 */
   function drawAnimalCard(g) {
     const AH = 1080;
@@ -763,39 +774,48 @@
       g.fillRect(0, 0, W, AH);
     }
 
-    // 카드 뒤 부드러운 그림자 (블러 레이어)
+    // 카드 뒤 부드러운 그림자 (블러 레이어 — 한 번만 만든다)
+    if (!animalCache.shadow) {
+      const SM0 = 110;
+      const sc0 = document.createElement('canvas');
+      sc0.width = CARD.w + SM0 * 2;
+      sc0.height = CARD.h + SM0 * 2 + 20;
+      const sg0 = sc0.getContext('2d');
+      sg0.filter = 'blur(28px)';
+      sg0.fillStyle = 'rgba(84,60,24,.30)';
+      roundRect(sg0, SM0, SM0 + 14, CARD.w, CARD.h, CARD.r);
+      sg0.fill();
+      animalCache.shadow = sc0;
+    }
     const SM = 110;
-    const shadow = document.createElement('canvas');
-    shadow.width = CARD.w + SM * 2;
-    shadow.height = CARD.h + SM * 2 + 20;
-    const sg = shadow.getContext('2d');
-    sg.filter = 'blur(28px)';
-    sg.fillStyle = 'rgba(84,60,24,.30)';
-    roundRect(sg, SM, SM + 14, CARD.w, CARD.h, CARD.r);
-    sg.fill();
-    g.drawImage(shadow, CARD.x - SM, CARD.y - SM);
+    g.drawImage(animalCache.shadow, CARD.x - SM, CARD.y - SM);
 
     // 반투명 크림 카드 = 카드 뒤 배경 흐림 + 크림 덮기
     const M = 90;
     const sx = Math.max(0, CARD.x - M), sy = Math.max(0, CARD.y - M);
     const ex = Math.min(W, CARD.x + CARD.w + M), ey = Math.min(AH, CARD.y + CARD.h + M);
     const rw = Math.max(1, ex - sx), rh = Math.max(1, ey - sy);
-    const glass = document.createElement('canvas');
-    glass.width = rw; glass.height = rh;
-    const gg = glass.getContext('2d');
     const blur = Math.max(0, Number(S.glassBlur) || 0);
-    if (blur > 0 && typeof gg.filter === 'string') {
-      gg.filter = `blur(${blur}px)`;
-      gg.drawImage(canvas, sx, sy, rw, rh, 0, 0, rw, rh);
-      gg.filter = 'none';
-    } else {
-      gg.drawImage(canvas, sx, sy, rw, rh, 0, 0, rw, rh);
+    const cacheKey = `${blur}|${animalBgReady ? 1 : 0}`;
+    if (animalCache.key !== cacheKey || !animalCache.glass) {
+      const glass = document.createElement('canvas');
+      glass.width = rw; glass.height = rh;
+      const gg = glass.getContext('2d');
+      if (blur > 0 && typeof gg.filter === 'string') {
+        gg.filter = `blur(${blur}px)`;
+        gg.drawImage(canvas, sx, sy, rw, rh, 0, 0, rw, rh);
+        gg.filter = 'none';
+      } else {
+        gg.drawImage(canvas, sx, sy, rw, rh, 0, 0, rw, rh);
+      }
+      animalCache.glass = glass;
+      animalCache.key = cacheKey;
     }
     g.save();
     g.beginPath();
     roundRect(g, CARD.x, CARD.y, CARD.w, CARD.h, CARD.r);
     g.clip();
-    g.drawImage(glass, sx, sy);
+    g.drawImage(animalCache.glass, sx, sy);
     g.fillStyle = hexA(CREAM, clamp(Number(S.glassPct) || 0, 0, 100) / 100);
     g.fillRect(CARD.x, CARD.y, CARD.w, CARD.h);
     g.restore();
@@ -1126,6 +1146,7 @@
       $('animalAccent').value = S.animalAccent;
     }
     $('skewOn').checked = S.skewOn;
+    $('barFadeOn').checked = S.barFadeOn;
     $('barGapOn').checked = S.barGapOn;
 
     $('title1').value = S.title1;
@@ -1176,6 +1197,9 @@
       b.classList.toggle('on', b.dataset.layout === S.layout));
     document.querySelectorAll('[data-when-layout]').forEach(el => {
       el.hidden = el.dataset.whenLayout !== S.layout;
+    });
+    document.querySelectorAll('[data-when-fade]').forEach(el => {
+      el.hidden = (el.dataset.whenFade === 'off') === !!S.barFadeOn;
     });
     const cmt = document.querySelector('#textSeg button[data-text="comment"]');
     if (cmt) cmt.hidden = bar;
@@ -1243,6 +1267,13 @@
 
     $('skewOn').addEventListener('change', e => { S.skewOn = e.target.checked; save(); render(); });
     $('barGapOn').addEventListener('change', e => { S.barGapOn = e.target.checked; save(); render(); });
+    $('barFadeOn').addEventListener('change', e => {
+      S.barFadeOn = e.target.checked;
+      document.querySelectorAll('[data-when-fade]').forEach(el => {
+        el.hidden = (el.dataset.whenFade === 'off') === !!S.barFadeOn;
+      });
+      save(); render();
+    });
 
     document.querySelectorAll('#layoutSeg button').forEach(b =>
       b.addEventListener('click', () => {

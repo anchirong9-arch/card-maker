@@ -70,14 +70,18 @@
           <input type="range" id="barPct" min="18" max="46" step="1" value="33">
         </label>
         <div class="toggle-row">
+          <label class="switch"><input type="checkbox" id="barFadeOn" checked><span></span>위로 부드럽게</label>
+          <b class="mini">그라데이션</b>
+        </div>
+        <div class="toggle-row">
           <label class="switch"><input type="checkbox" id="skewOn" checked><span></span>오른쪽 기울임</label>
           <b class="mini">11°</b>
         </div>
-        <div class="toggle-row">
+        <div class="toggle-row" data-when-fade="off">
           <label class="switch"><input type="checkbox" id="barGapOn" checked><span></span>흰 구분선</label>
           <b class="mini">24px</b>
         </div>
-        <p class="hint">사진이 위쪽을 꽉 채우고, 검정 창 <b>가운데</b>에 두 줄 제목이 들어갑니다. 제목·서브·포인트 색은 아래 <b>텍스트</b> 칸 그대로 쓰고, 사진 위치는 <b>위아래 자르기</b>로 잡으세요.</p>
+        <p class="hint">사진이 위쪽을 꽉 채우고, 아래는 <b>진한 검정 → 위로 갈수록 옅어지는 그라데이션</b>으로 사진과 자연스럽게 이어집니다. 그 문구는 검정 영역 <b>가운데</b>에 두 줄로 들어가고, 제목·서브·포인트 색은 아래 <b>텍스트</b> 칸을 그대로 씁니다. 사진 위치는 <b>위아래 자르기</b>로 잡으세요. (그라데이션을 끄면 예전처럼 딱 끊기는 검정창 + 흰 구분선)</p>
       </div>
       <p class="hint" data-when-layout="blur" hidden>사진 뒤를 블러로 깔고 아래쪽에 스크림을 얹는 기본 카드입니다.</p>
     </div>
@@ -179,7 +183,7 @@
       <label class="ctl tight"><span>그림자 진하기</span><b id="shadowOpacityVal">55%</b>
         <input type="range" id="shadowOpacity" min="0" max="100" step="1" value="55">
       </label>
-      <p class="hint">썸네일 문구는 기본으로 검은 외곽선 + 그림자가 켜져 있어요. 하단 검정창 모드에서는 외곽선이 조금 더 두껍게 그려집니다.</p>
+      <p class="hint">썸네일 문구는 기본으로 검은 외곽선이 켜져 있어요(검정창 위라 그림자는 넣지 않습니다). 하단 검정창 모드에서는 외곽선이 조금 더 두껍게 그려집니다.</p>
     </div>
 
     <div class="card">
@@ -279,6 +283,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>
