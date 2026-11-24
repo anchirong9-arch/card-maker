@@ -1821,7 +1821,7 @@
     $('simpleBottom').value = S.simpleBottom;
     $('simpleBottomVal').textContent = S.simpleBottom + 'px';
     $('simpleStrokeW').value = S.simpleStrokeW;
-    $('simpleStrokeVal').textContent = S.simpleStrokeW + 'px';
+    $('simpleStrokeWVal').textContent = S.simpleStrokeW + 'px';
     $('simpleChSize').value = S.simpleChSize;
     $('simpleChSizeVal').textContent = S.simpleChSize + 'px';
     $('simpleChGap').value = S.simpleChGap;
@@ -1859,7 +1859,7 @@
     if (!$('simpleGradCtl')) return;
     $('simpleGradCtl').hidden = !S.simpleGradOn;
     $('simpleStrokeW').hidden = !S.simpleStroke;
-    $('simpleStrokeVal').hidden = !S.simpleStroke;
+    $('simpleStrokeWVal').hidden = !S.simpleStroke;
   }
 
   /* 자르기 값은 ①·⑤·⑥이 함께 쓴다 — 보이는 슬라이더·숫자를 모두 맞춘다 */
