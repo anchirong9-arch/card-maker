@@ -105,7 +105,8 @@ body{
 .drop-ico{font-size:34px;line-height:1;color:var(--accent);opacity:.9}
 .stage.drag{outline:2px dashed var(--accent);outline-offset:-8px}
 
-.stage-bar{display:flex;align-items:center;gap:8px;margin-top:12px}
+.stage-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.stage-bar .btn{white-space:nowrap;flex:0 0 auto}
 .dims{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .stage-note{margin:10px 2px 0;font-size:12.5px;color:var(--muted);min-height:18px}
 
@@ -261,6 +262,8 @@ input[type=range]::-moz-range-thumb{
   .card{padding:14px}
   .foot{padding:0 16px 28px}
   .thumbs .thumb{width:58px;height:58px}
+  /* 미리보기 아래 저장 버튼은 글자가 줄바꿈되지 않고, 크기 표시만 다음 줄로 */
+  .dims{flex:1 1 100%;text-align:right;margin-top:2px}
 }
 @media(max-width:380px){
   .brand-txt b{font-size:14.5px}
