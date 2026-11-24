@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d0e12">
-<title>1:1 카드 메이커 · 블러 · 하단 검정창 · 다크 아웃트로 · 미니멀 카드</title>
-<meta name="description" content="사진 한 장(또는 여러 장)을 1080×1080 카드로 — 블러 배경 카드, 하단 검정창 + 기울임 2줄 썸네일, 1줄 코멘트, 다크 아웃트로 카드까지 브라우저에서 바로 만들고 PNG·ZIP으로 저장">
+<title>1:1 카드 메이커 · 블러 · 하단 검정창 · 마무리(라일락·동물촌)</title>
+<meta name="description" content="사진 한 장(또는 여러 장)을 1080×1080 카드로 — 블러 배경 카드, 하단 검정창 + 기울임 2줄 썸네일, 1줄 코멘트, 마무리(엔딩) 카드 라일락·동물촌 버전까지 브라우저에서 바로 만들고 PNG·ZIP으로 저장">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d0e12'/%3E%3Crect x='6' y='19' width='20' height='4' rx='2' fill='%23C084FC'/%3E%3Crect x='6' y='9' width='12' height='6' rx='2' fill='%23E9EAF0'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -19,14 +19,15 @@
     <span class="logo" aria-hidden="true"></span>
     <div class="brand-txt">
       <b>1:1 카드 메이커</b>
-      <small>1080×1080 · 썸네일 · 다크 아웃트로 · 미니멀 카드 · PNG/ZIP</small>
+      <small>1080×1080 · 썸네일 · 마무리 카드(라일락·동물촌) · PNG/ZIP</small>
     </div>
   </div>
 
   <nav class="modes" role="tablist" aria-label="제작 종류">
     <button type="button" role="tab" data-tab="card" class="on" aria-selected="true">① 1:1 카드</button>
-    <button type="button" role="tab" data-tab="outro" aria-selected="false">② 다크 아웃트로</button>
-    <button type="button" role="tab" data-tab="minimal" aria-selected="false">③ 미니멀 카드</button>
+    <button type="button" role="tab" data-tab="outro" aria-selected="false">② 마무리(다크)</button>
+    <button type="button" role="tab" data-tab="minimal" aria-selected="false">③ 마무리(라일락)</button>
+    <button type="button" role="tab" data-tab="animal" aria-selected="false">④ 마무리(동물촌)</button>
   </nav>
 </header>
 
@@ -202,12 +203,13 @@
   <section class="controls" id="panelOutro" aria-label="아웃트로 카드 설정" hidden>
     <div class="card">
       <h2><span id="outroTitleTxt">다크 아웃트로</span> <small id="outroSizeTxt">1080 × 1080</small></h2>
-      <div class="seg" id="outroRatioSeg" role="group" aria-label="아웃트로 비율">
+      <div class="seg" id="outroRatioSeg" role="group" aria-label="아웃트로 비율" data-hide-on="animal">
         <button type="button" data-ratio="1:1" class="on">1:1 · 1080×1080</button>
         <button type="button" data-ratio="4:5">4:5 · 1080×1350</button>
       </div>
-      <p class="hint" data-when-ostyle="minimal"><b>미니멀 카드</b> — 브랜드 · 마무리 문구 · 채널 3줄만 <b>가운데 정렬</b>로 넣는 마지막 카드. 01·02·03 요약과 영어 헤더 · END 배지는 없습니다.</p>
-      <p class="hint" data-when-ostyle="summary"><b>다크 아웃트로</b> — 영어 헤더 · `오늘의 짤, 이렇게 정리!` · 01·02·03 요약 · END 배지가 들어가는 요약형입니다.</p>
+      <p class="hint" data-when-ostyle="minimal"><b>마무리(라일락)</b> — 검정 바탕 <code>#111216</code> + 라일락 포인트. 브랜드 · 마무리 문구 · 채널 3줄(<code>YouTube 싱글벙글 동물촌</code> · <code>TikTok @animallolvillage</code> · <code>리틀리 litt.ly/anchirong</code>)만 <b>가운데 정렬</b>로 넣는 마지막 카드. 01·02·03 요약과 영어 헤더 · END 배지는 없습니다.</p>
+      <p class="hint" data-when-ostyle="summary"><b>마무리(다크·요약)</b> — 영어 헤더 · `오늘의 짤, 이렇게 정리!` · 01·02·03 요약 · END 배지가 들어가는 요약형입니다.</p>
+      <p class="hint" data-when-ostyle="animal"><b>마무리(동물촌)</b> — 3D 동화풍 꽃밭 마을 배경(<code>assets/outro-dongmulchon-bg.jpg</code>) 위에 반투명 크림 카드를 얹는 마지막 카드. 1:1(1080×1080) 고정이고, 아래 <b>브랜드 · 마무리 문구 · 채널 3줄</b>을 그대로 씁니다.</p>
       <label class="field"><span>상단 브랜드명</span>
         <input type="text" id="oBrand" maxlength="40" value="싱글벙글 동물촌">
       </label>
@@ -238,7 +240,20 @@
       <label class="field"><span>채널 3</span><input type="text" id="oCh3" maxlength="40" value="리틀리 litt.ly/anchirong"></label>
       <label class="field"><span>하단 문구</span><input type="text" id="oFoot" maxlength="48" value="프로필 링크에서 짤 속 아이템 모아보기"></label>
     </div>
-    <div class="card">
+    <div class="card" data-when-ostyle="animal">
+      <h2>동물촌 카드 <small>크림 카드 · 배경</small></h2>
+      <label class="ctl"><span>크림 카드 진하기</span><b id="glassPctVal">86%</b>
+        <input type="range" id="glassPct" min="0" max="100" step="1" value="86">
+      </label>
+      <label class="ctl"><span>배경 흐림</span><b id="glassBlurVal">22px</b>
+        <input type="range" id="glassBlur" min="0" max="40" step="1" value="22">
+      </label>
+      <label class="field"><span>강조 색 <em>‘좋아요와 팔로우!’</em></span>
+        <input type="color" id="animalAccent" value="#F97316">
+      </label>
+      <p class="hint">배경 일러스트는 <b>assets/outro-dongmulchon-bg.jpg</b>(1080×1080) 고정입니다. 텍스트만 바꿔 <b>PNG 저장</b>하면 바로 쓸 수 있어요.</p>
+    </div>
+    <div class="card" data-hide-on="animal">
       <h2>포인트 색</h2>
       <div class="swatches" id="swatchesOutro">
         <button type="button" data-color="#C084FC" class="on" title="라일락" style="--c:#C084FC"></button>
@@ -264,6 +279,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>

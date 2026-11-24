@@ -41,6 +41,10 @@
     shadowY: 8,
     shadowOpacity: 55,
     accent: '#C084FC',
+    // ④ 마무리(동물촌) — 반투명 크림 카드
+    glassPct: 86,          // 크림 카드 진하기(%)
+    glassBlur: 22,         // 카드 뒤 배경 흐림(px)
+    animalAccent: '#F97316',
     outroRatio: '1:1',
     outro: {
       brand: 'SINGULBUNGUL ANIMAL VILLAGE',
@@ -222,7 +226,7 @@
       box.appendChild(b);
     });
     $('countTxt').textContent = `${items.length}장`;
-    const isOutroTab = S.tab === 'outro' || S.tab === 'minimal';
+    const isOutroTab = S.tab === 'outro' || S.tab === 'minimal' || S.tab === 'animal';
     $('stageEmpty').hidden = items.length > 0 || isOutroTab;
     $('zipBtn').disabled = items.length === 0 || isOutroTab;
     $('thumbs').style.display = S.tab === 'card' ? '' : 'none';
@@ -717,8 +721,177 @@
     if (foot) fate(foot, OH - 84, 20, 400, MUTED, W - 160);
   }
 
+  /* ───────── ④ 마무리(동물촌) ───────── */
+  const ANIMAL_BG_SRC = 'assets/outro-dongmulchon-bg.jpg';
+  const animalBg = new Image();
+  let animalBgReady = false;
+  animalBg.addEventListener('load', () => {
+    animalBgReady = true;
+    if (S.tab === 'animal') render();
+  });
+  animalBg.addEventListener('error', () => { animalBgReady = false; });
+  animalBg.src = ANIMAL_BG_SRC;
+
+  /* 1080×1080 고정 — 3D 꽃밭 마을 배경 + 반투명 크림 카드 */
+  function drawAnimalCard(g) {
+    const AH = 1080;
+    const CARD = { x: 96, y: 140, w: 888, h: 522, r: 44 };
+    const CREAM = '#FFF9EC';
+    const CHARCOAL = '#22252A';
+    const BROWN = '#685A44';
+    const PLAT = '#80715A';
+    const FOOT = '#70624C';
+    const LINE = '#E2D4B8';
+    const GREEN = '#7BC043';
+    const ACCENT = S.animalAccent || '#F97316';
+
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, W, AH);
+
+    // 배경 (1:1 cover)
+    if (animalBgReady) {
+      const iw = animalBg.naturalWidth || W, ih = animalBg.naturalHeight || AH;
+      const sc = Math.max(W / iw, AH / ih);
+      const dw = iw * sc, dh = ih * sc;
+      g.drawImage(animalBg, (W - dw) / 2, (AH - dh) / 2, dw, dh);
+    } else {
+      const gr = g.createLinearGradient(0, 0, 0, AH);
+      gr.addColorStop(0, '#FBE7C8');
+      gr.addColorStop(0.55, '#FDF0D8');
+      gr.addColorStop(1, '#B9CE86');
+      g.fillStyle = gr;
+      g.fillRect(0, 0, W, AH);
+    }
+
+    // 카드 뒤 부드러운 그림자 (블러 레이어)
+    const SM = 110;
+    const shadow = document.createElement('canvas');
+    shadow.width = CARD.w + SM * 2;
+    shadow.height = CARD.h + SM * 2 + 20;
+    const sg = shadow.getContext('2d');
+    sg.filter = 'blur(28px)';
+    sg.fillStyle = 'rgba(84,60,24,.30)';
+    roundRect(sg, SM, SM + 14, CARD.w, CARD.h, CARD.r);
+    sg.fill();
+    g.drawImage(shadow, CARD.x - SM, CARD.y - SM);
+
+    // 반투명 크림 카드 = 카드 뒤 배경 흐림 + 크림 덮기
+    const M = 90;
+    const sx = Math.max(0, CARD.x - M), sy = Math.max(0, CARD.y - M);
+    const ex = Math.min(W, CARD.x + CARD.w + M), ey = Math.min(AH, CARD.y + CARD.h + M);
+    const rw = Math.max(1, ex - sx), rh = Math.max(1, ey - sy);
+    const glass = document.createElement('canvas');
+    glass.width = rw; glass.height = rh;
+    const gg = glass.getContext('2d');
+    const blur = Math.max(0, Number(S.glassBlur) || 0);
+    if (blur > 0 && typeof gg.filter === 'string') {
+      gg.filter = `blur(${blur}px)`;
+      gg.drawImage(canvas, sx, sy, rw, rh, 0, 0, rw, rh);
+      gg.filter = 'none';
+    } else {
+      gg.drawImage(canvas, sx, sy, rw, rh, 0, 0, rw, rh);
+    }
+    g.save();
+    g.beginPath();
+    roundRect(g, CARD.x, CARD.y, CARD.w, CARD.h, CARD.r);
+    g.clip();
+    g.drawImage(glass, sx, sy);
+    g.fillStyle = hexA(CREAM, clamp(Number(S.glassPct) || 0, 0, 100) / 100);
+    g.fillRect(CARD.x, CARD.y, CARD.w, CARD.h);
+    g.restore();
+
+    // 카드 테두리
+    g.save();
+    g.strokeStyle = 'rgba(255,255,252,.45)';
+    g.lineWidth = 2;
+    roundRect(g, CARD.x, CARD.y, CARD.w, CARD.h, CARD.r);
+    g.stroke();
+    g.restore();
+
+    // 잉크 기준 가운데 정렬 텍스트
+    const ink = (str, cx, cy, size, weight, family, color, track) => {
+      g.font = `${weight} ${size}px ${family}`;
+      g.textBaseline = 'middle';
+      g.textAlign = 'left';
+      if (track) {
+        const chars = [...str];
+        const ws = chars.map(c => g.measureText(c).width);
+        const total = ws.reduce((a, b) => a + b, 0) + track * (chars.length - 1);
+        let x = cx - total / 2;
+        g.fillStyle = color;
+        chars.forEach((c, i) => { g.fillText(c, x, cy); x += ws[i] + track; });
+        return;
+      }
+      g.textAlign = 'center';
+      g.fillStyle = color;
+      g.fillText(str, cx, cy);
+      g.textAlign = 'left';
+    };
+
+    const brand = (S.outro.brand || '').trim();
+    if (brand) ink(brand, W / 2, 214, 42, 400, F_BLACK, CHARCOAL, 5);
+
+    // 짧은 구분선 + 초록 점
+    const ly = 262;
+    g.fillStyle = '#E0D0B2';
+    roundRect(g, W / 2 - 34, ly - 1.5, 26, 3, 2);
+    g.fill();
+    roundRect(g, W / 2 + 8, ly - 1.5, 26, 3, 2);
+    g.fill();
+    g.beginPath();
+    g.arc(W / 2, ly, 5, 0, Math.PI * 2);
+    g.fillStyle = GREEN;
+    g.fill();
+
+    const sub = (S.outro.cta1 || '').trim();
+    if (sub) ink(sub, W / 2, 302, 29, 400, F_NOTO, BROWN);
+    const cta = (S.outro.cta2 || '').trim();
+    if (cta) ink(cta, W / 2, 356, 56, 400, F_BLACK, ACCENT);
+
+    // 채널 3열 (플랫폼 · 핸들)
+    const chans = [S.outro.ch1, S.outro.ch2, S.outro.ch3]
+      .map(s => (s || '').trim()).filter(Boolean);
+    const dots = [ACCENT, CHARCOAL, GREEN];
+    const colsFor = (n) => (n === 3 ? [W * 0.255, W * 0.5, W * 0.745]
+      : n === 2 ? [W * 0.33, W * 0.67] : [W * 0.5]);
+    const cols = colsFor(chans.length);
+    chans.forEach((line, i) => {
+      const cx0 = cols[i];
+      const sp = line.indexOf(' ');
+      const plat = sp > 0 ? line.slice(0, sp) : '';
+      const handle = sp > 0 ? line.slice(sp + 1).trim() : line;
+      if (plat) {
+        g.font = `400 20px ${F_NOTO}`;
+        const pw = g.measureText(plat).width;
+        const total = 8 + 12 + pw;
+        const start = cx0 - total / 2;
+        g.beginPath();
+        g.arc(start + 4, 448, 4, 0, Math.PI * 2);
+        g.fillStyle = dots[i] || CHARCOAL;
+        g.fill();
+        g.textAlign = 'left';
+        g.textBaseline = 'middle';
+        g.fillStyle = PLAT;
+        g.fillText(plat, start + 20, 448);
+      }
+      g.font = `500 26px ${F_NOTO}`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillStyle = CHARCOAL;
+      g.fillText(handle, cx0, 488);
+      g.textAlign = 'left';
+    });
+
+    // 구분선 + 하단 문구
+    g.fillStyle = 'rgba(226,212,184,.85)';
+    g.fillRect(CARD.x + 70, 552, CARD.w - 140, 2);
+    const foot = (S.outro.foot || '').trim();
+    if (foot) ink(foot, W / 2, 594, 21, 400, F_NOTO, FOOT);
+  }
+
   function drawOutro(g, OH) {
     if (S.tab === 'minimal') { drawOutroMinimal(g, OH); return; }
+    if (S.tab === 'animal') { drawAnimalCard(g); return; }
     const BG = '#111216', SURFACE = '#1B1D24', BORDER = '#2B2E38';
     const MAIN = '#F4F5F7', SUB = '#CBD0DC', MUTED = '#7C8497';
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -820,8 +993,8 @@
   /* ───────── 렌더 ───────── */
   function render() {
     const g = canvas.getContext('2d');
-    if (S.tab === 'outro' || S.tab === 'minimal') {
-      const OH = outroHeight();
+    if (S.tab === 'outro' || S.tab === 'minimal' || S.tab === 'animal') {
+      const OH = S.tab === 'animal' ? 1080 : outroHeight();
       if (canvas.height !== OH) canvas.height = OH;
       canvas.width = W;
       $('stage').style.aspectRatio = `1080 / ${OH}`;
@@ -830,9 +1003,11 @@
       $('zipBtn').disabled = true;
       $('pngBtn').disabled = false;
       $('outroSizeTxt').textContent = `1080 × ${OH}`;
-      $('dims').textContent = S.tab === 'minimal'
-        ? `1080 × ${OH} · 미니멀 카드`
-        : `1080 × ${OH} · 다크 아웃트로`;
+      $('dims').textContent = S.tab === 'animal'
+        ? `1080 × ${OH} · 마무리(동물촌)`
+        : S.tab === 'minimal'
+          ? `1080 × ${OH} · 마무리(라일락)`
+          : `1080 × ${OH} · 마무리(다크)`;
       if (!fontsReady) note('폰트 불러오는 중…');
       return;
     }
@@ -854,12 +1029,13 @@
 
   /* ───────── 저장 ───────── */
   async function savePNG() {
-    const outroTab = S.tab === 'outro' || S.tab === 'minimal';
+    const outroTab = S.tab === 'outro' || S.tab === 'minimal' || S.tab === 'animal';
     if (!outroTab && (active < 0 || !items[active])) { toast('먼저 사진을 넣어 주세요'); return null; }
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     if (!blob) { toast('저장 실패 — 다시 시도해 주세요'); return null; }
-    const name = S.tab === 'minimal' ? `minimal-${stamp()}.png`
-      : S.tab === 'outro' ? `outro-${stamp()}.png` : `card-${stamp()}.png`;
+    const name = S.tab === 'animal' ? `ending-dongmulchon-${stamp()}.png`
+      : S.tab === 'minimal' ? `minimal-${stamp()}.png`
+        : S.tab === 'outro' ? `outro-${stamp()}.png` : `card-${stamp()}.png`;
     download(blob, name);
     toast(`PNG 저장 · ${name}`);
     return { blob, name };
@@ -942,6 +1118,13 @@
     $('shadowOpacityVal').textContent = S.shadowOpacity + '%';
     $('barPct').value = S.barPct;
     $('barPctVal').textContent = S.barPct + '%';
+    if ($('glassPct')) {
+      $('glassPct').value = S.glassPct;
+      $('glassPctVal').textContent = S.glassPct + '%';
+      $('glassBlur').value = S.glassBlur;
+      $('glassBlurVal').textContent = S.glassBlur + 'px';
+      $('animalAccent').value = S.animalAccent;
+    }
     $('skewOn').checked = S.skewOn;
     $('barGapOn').checked = S.barGapOn;
 
@@ -972,13 +1155,17 @@
     applyAccentUI();
   }
 
-  /* 아웃트로 탭(다크 아웃트로 / 미니멀 카드)에 따라 보이는 컨트롤을 바꾼다 */
+  /* 아웃트로 탭(마무리 다크 / 라일락 / 동물촌)에 따라 보이는 컨트롤을 바꾼다 */
   function applyOutroUI() {
-    const isMin = S.tab === 'minimal';
+    const style = S.tab === 'minimal' ? 'minimal' : S.tab === 'animal' ? 'animal' : 'summary';
     const t = $('outroTitleTxt');
-    if (t) t.textContent = isMin ? '미니멀 카드' : '다크 아웃트로';
+    if (t) t.textContent = style === 'animal' ? '마무리(동물촌)'
+      : style === 'minimal' ? '마무리(라일락)' : '마무리(다크·요약)';
     document.querySelectorAll('[data-when-ostyle]').forEach(el => {
-      el.hidden = el.dataset.whenOstyle !== (isMin ? 'minimal' : 'summary');
+      el.hidden = el.dataset.whenOstyle !== style;
+    });
+    document.querySelectorAll('[data-hide-on]').forEach(el => {
+      el.hidden = el.dataset.hideOn === style;
     });
   }
 
@@ -1044,6 +1231,15 @@
     bindRange('shadowY', 'shadowY', v => v + 'px');
     bindRange('shadowOpacity', 'shadowOpacity', v => v + '%');
     bindRange('barPct', 'barPct', v => v + '%');
+    bindRange('glassPct', 'glassPct', v => v + '%');
+    bindRange('glassBlur', 'glassBlur', v => v + 'px');
+
+    if ($('animalAccent')) {
+      $('animalAccent').addEventListener('input', e => {
+        S.animalAccent = e.target.value.toUpperCase();
+        save(); render();
+      });
+    }
 
     $('skewOn').addEventListener('change', e => { S.skewOn = e.target.checked; save(); render(); });
     $('barGapOn').addEventListener('change', e => { S.barGapOn = e.target.checked; save(); render(); });
@@ -1101,11 +1297,13 @@
         applyOutroUI();
         renderThumbs();
         render();
-        note(S.tab === 'minimal'
-          ? '미니멀 카드 — 브랜드 · 마무리 문구 · 채널 3줄만 가운데 정렬로.'
-          : S.tab === 'outro'
-            ? '다크 아웃트로 — 영어 헤더 · 01·02·03 요약 · END 배지.'
-            : '사진을 넣으면 바로 1:1 카드가 만들어집니다.');
+        note(S.tab === 'animal'
+          ? '마무리(동물촌) — 꽃밭 마을 배경 위 반투명 크림 카드. 텍스트만 바꿔 PNG 저장.'
+          : S.tab === 'minimal'
+            ? '마무리(라일락) — 브랜드 · 마무리 문구 · 채널 3줄만 가운데 정렬로.'
+            : S.tab === 'outro'
+              ? '마무리(다크·요약) — 헤더 · 01·02·03 요약 · END 배지.'
+              : '사진을 넣으면 바로 1:1 카드가 만들어집니다.');
         toEndAnchor();
       }));
 

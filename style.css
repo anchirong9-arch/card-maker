@@ -59,6 +59,7 @@ body{
   white-space:nowrap;
 }
 .modes button.on{background:var(--accent-soft);color:#e6ccff;box-shadow:0 0 0 1px var(--accent-line) inset}
+.modes button:focus-visible{outline:2px solid var(--accent-line);outline-offset:2px}
 
 /* ───────── 레이아웃 ───────── */
 .layout{
@@ -237,8 +238,8 @@ input[type=range]::-moz-range-thumb{
   .stage-col{position:static}
   .topbar{padding:12px 14px;gap:10px}
   .brand-txt small{display:none}
-  .modes{margin-left:0;width:100%}
-  .modes button{flex:1;padding:9px 8px;font-size:13px}
+  .modes{margin-left:0;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .modes button{flex:none;min-width:0;padding:9px 6px;font-size:12.5px;letter-spacing:-.2px;overflow:hidden;text-overflow:ellipsis}
   .stage-wrap{padding:10px}
   .card{padding:14px}
   .foot{padding:0 16px 28px}
