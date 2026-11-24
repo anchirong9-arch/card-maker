@@ -437,7 +437,7 @@
     g.fillStyle = '#0d0e12';
     g.fillRect(0, 0, W, H);
 
-    // 위쪽: 사진이 가로로 꽉 차게 — 아래 검정 영역 뒤로도 같은 배율로 이어 그린다
+    // 위쪽: 사진이 가로로 꽉 차게
     const t = clamp(S.trimTop, 0, 45) / 100, b = clamp(S.trimBottom, 0, 45) / 100;
     const srcY = img.height * t;
     const srcH = Math.max(8, img.height * (1 - t - b));
@@ -447,7 +447,7 @@
     const dx = (W - ow) / 2, dy = (m.photoH - oh) / 2;
     g.save();
     g.beginPath();
-    g.rect(0, 0, W, H);
+    g.rect(0, 0, W, m.photoH);
     g.clip();
     g.imageSmoothingEnabled = true;
     g.imageSmoothingQuality = 'high';
@@ -455,17 +455,19 @@
     g.restore();
 
     if (S.barFadeOn) {
-      // 아래는 진한 검정 → 위로 갈수록 옅어지며 사진과 자연스럽게 이어짐
-      const fadeTop = Math.max(0, m.photoH - Math.round(m.barH * 0.55));
-      const grd = g.createLinearGradient(0, fadeTop, 0, H);
+      // 사진 아래쪽이 검정으로 녹아들고, 그 아래가 진한 검정 바탕 — 딱 끊기는 경계 없이 이어진다
+      const fadeH = Math.min(m.photoH, Math.max(120, Math.round(m.barH * 0.85)));
+      const fadeTop = m.photoH - fadeH;
+      const grd = g.createLinearGradient(0, fadeTop, 0, m.photoH);
       grd.addColorStop(0, 'rgba(7,12,8,0)');
-      grd.addColorStop(0.22, 'rgba(7,12,8,0.16)');
-      grd.addColorStop(0.40, 'rgba(7,12,8,0.44)');
-      grd.addColorStop(0.58, 'rgba(7,12,8,0.74)');
-      grd.addColorStop(0.76, 'rgba(7,12,8,0.92)');
+      grd.addColorStop(0.40, 'rgba(7,12,8,0.16)');
+      grd.addColorStop(0.70, 'rgba(7,12,8,0.55)');
+      grd.addColorStop(0.88, 'rgba(7,12,8,0.85)');
       grd.addColorStop(1, 'rgba(7,12,8,1)');
       g.fillStyle = grd;
-      g.fillRect(0, fadeTop, W, H - fadeTop);
+      g.fillRect(0, fadeTop, W, fadeH);
+      g.fillStyle = BAR_BG;
+      g.fillRect(0, m.photoH, W, H - m.photoH);
     } else {
       if (m.gap > 0) {
         g.fillStyle = '#ffffff';
