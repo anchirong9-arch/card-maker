@@ -694,7 +694,7 @@
     const ctaSize = 48;
     if (S.outro.cta1) y += text(S.outro.cta1, pad, y, ctaSize, 900, F_NOTO, MAIN, W - pad * 2) * 1.22;
     if (S.outro.cta2) y += text(S.outro.cta2, pad, y, ctaSize, 900, F_NOTO, MAIN, W - pad * 2) * 1.22;
-    y += 30 + extra * 0.10;
+    y += 24 + extra * 0.10;
 
     for (const ch of [S.outro.ch1, S.outro.ch2, S.outro.ch3]) {
       const raw = (ch || '').trim();
@@ -708,7 +708,7 @@
         const pw = g.measureText(plat).width;
         text(handle, pad + Math.max(190, pw + 40), y, 28, 400, F_NOTO, SUB, W - pad * 2 - 210);
       }
-      y += 44;
+      y += 42;
     }
 
     const fy = OH - 88;
