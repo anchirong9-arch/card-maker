@@ -220,8 +220,9 @@
       box.appendChild(b);
     });
     $('countTxt').textContent = `${items.length}장`;
-    $('stageEmpty').hidden = items.length > 0 || S.tab === 'outro';
-    $('zipBtn').disabled = items.length === 0 || S.tab === 'outro';
+    const isOutroTab = S.tab === 'outro' || S.tab === 'minimal';
+    $('stageEmpty').hidden = items.length > 0 || isOutroTab;
+    $('zipBtn').disabled = items.length === 0 || isOutroTab;
     $('thumbs').style.display = S.tab === 'card' ? '' : 'none';
   }
 
@@ -631,7 +632,91 @@
   /* ───────── ② 아웃트로 ───────── */
   function outroHeight() { return S.outroRatio === '4:5' ? 1350 : 1080; }
 
+  /* ③ 미니멀 카드 — 가운데 정렬 · 01·02·03 요약 없음 · 영어 헤더/END 없음 */
+  function drawOutroMinimal(g, OH) {
+    const BG = '#111216';
+    const MAIN = '#F4F5F7', SUB = '#CBD0DC', MUTED = '#7C8497';
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = BG;
+    g.fillRect(0, 0, W, OH);
+
+    const k = OH / 1080;                       // 4:5 는 비율대로 조금 더 여유 있게
+    const fate = (str, y, size, weight, color, maxW, track) => {
+      let s = size;
+      g.font = `${weight} ${s}px ${F_NOTO}`;
+      const mw = maxW || W - 160;
+      while (s > 15 && g.measureText(str).width > mw) {
+        s -= 1;
+        g.font = `${weight} ${s}px ${F_NOTO}`;
+      }
+      g.textBaseline = 'top';
+      g.textAlign = 'left';
+      if (track) {
+        const chars = [...str];
+        const ws = chars.map(c => g.measureText(c).width);
+        const total = ws.reduce((a, b) => a + b, 0) + track * (chars.length - 1);
+        let x = (W - total) / 2;
+        g.fillStyle = color;
+        chars.forEach((c, i) => { g.fillText(c, x, y); x += ws[i] + track; });
+        return s;
+      }
+      g.textAlign = 'center';
+      const bf = boldFactor(weight);
+      if (bf > 0) {
+        g.lineJoin = 'round';
+        g.strokeStyle = color;
+        g.lineWidth = s * bf;
+        g.strokeText(str, W / 2, y);
+      }
+      g.fillStyle = color;
+      g.fillText(str, W / 2, y);
+      g.textAlign = 'left';
+      return s;
+    };
+
+    // 상단: 브랜드 + 라일락 짧은 바
+    const brand = (S.outro.brand || '').trim();
+    if (brand) fate(brand, 146 * k, 31, 500, MAIN, W - 200, 5);
+    const barW = 62, barY = 146 * k + 68;
+    g.fillStyle = S.accent;
+    roundRect(g, (W - barW) / 2, barY, barW, 3, 1.5);
+    g.fill();
+
+    // 중앙: 마무리 문구
+    const ctaSize = 58;
+    if ((S.outro.cta1 || '').trim()) fate(S.outro.cta1.trim(), 452 * k, ctaSize, 800, MAIN, W - 200);
+    if ((S.outro.cta2 || '').trim()) fate(S.outro.cta2.trim(), 452 * k + 71, ctaSize, 800, S.accent, W - 200);
+
+    // 하단: 채널 3줄 (가운데 정렬 · 플랫폼/핸들 색 구분)
+    let y = 742 * k;
+    for (const raw of [S.outro.ch1, S.outro.ch2, S.outro.ch3]) {
+      const line = (raw || '').trim();
+      if (!line) { y += 50; continue; }
+      const sp = line.indexOf(' ');
+      const plat = sp > 0 ? line.slice(0, sp) : line;
+      const handle = sp > 0 ? line.slice(sp + 1) : '';
+      g.font = `400 26px ${F_NOTO}`;
+      g.textBaseline = 'top';
+      const pw = g.measureText(plat).width;
+      const hw = handle ? g.measureText(handle).width : 0;
+      const gap = 18;
+      let x = (W - (pw + (handle ? gap + hw : 0))) / 2;
+      g.fillStyle = MUTED;
+      g.fillText(plat, x, y);
+      if (handle) {
+        g.fillStyle = SUB;
+        g.fillText(handle, x + pw + gap, y);
+      }
+      y += 50;
+    }
+
+    // 맨 아래 아주 작게
+    const foot = (S.outro.foot || '').trim();
+    if (foot) fate(foot, OH - 84, 20, 400, MUTED, W - 160);
+  }
+
   function drawOutro(g, OH) {
+    if (S.tab === 'minimal') { drawOutroMinimal(g, OH); return; }
     const BG = '#111216', SURFACE = '#1B1D24', BORDER = '#2B2E38';
     const MAIN = '#F4F5F7', SUB = '#CBD0DC', MUTED = '#7C8497';
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -733,7 +818,7 @@
   /* ───────── 렌더 ───────── */
   function render() {
     const g = canvas.getContext('2d');
-    if (S.tab === 'outro') {
+    if (S.tab === 'outro' || S.tab === 'minimal') {
       const OH = outroHeight();
       if (canvas.height !== OH) canvas.height = OH;
       canvas.width = W;
@@ -743,7 +828,9 @@
       $('zipBtn').disabled = true;
       $('pngBtn').disabled = false;
       $('outroSizeTxt').textContent = `1080 × ${OH}`;
-      $('dims').textContent = `1080 × ${OH} · 아웃트로`;
+      $('dims').textContent = S.tab === 'minimal'
+        ? `1080 × ${OH} · 미니멀 카드`
+        : `1080 × ${OH} · 다크 아웃트로`;
       if (!fontsReady) note('폰트 불러오는 중…');
       return;
     }
@@ -765,10 +852,12 @@
 
   /* ───────── 저장 ───────── */
   async function savePNG() {
-    if (S.tab !== 'outro' && (active < 0 || !items[active])) { toast('먼저 사진을 넣어 주세요'); return null; }
+    const outroTab = S.tab === 'outro' || S.tab === 'minimal';
+    if (!outroTab && (active < 0 || !items[active])) { toast('먼저 사진을 넣어 주세요'); return null; }
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     if (!blob) { toast('저장 실패 — 다시 시도해 주세요'); return null; }
-    const name = S.tab === 'outro' ? `outro-${stamp()}.png` : `card-${stamp()}.png`;
+    const name = S.tab === 'minimal' ? `minimal-${stamp()}.png`
+      : S.tab === 'outro' ? `outro-${stamp()}.png` : `card-${stamp()}.png`;
     download(blob, name);
     toast(`PNG 저장 · ${name}`);
     return { blob, name };
@@ -876,8 +965,19 @@
     document.querySelectorAll('#textSeg button').forEach(b => b.classList.toggle('on', b.dataset.text === S.textMode));
     document.querySelectorAll('#outroRatioSeg button').forEach(b => b.classList.toggle('on', b.dataset.ratio === S.outroRatio));
     document.querySelectorAll('[data-when]').forEach(el => { el.hidden = el.dataset.when !== S.textMode; });
+    applyOutroUI();
     applyLayoutUI();
     applyAccentUI();
+  }
+
+  /* 아웃트로 탭(다크 아웃트로 / 미니멀 카드)에 따라 보이는 컨트롤을 바꾼다 */
+  function applyOutroUI() {
+    const isMin = S.tab === 'minimal';
+    const t = $('outroTitleTxt');
+    if (t) t.textContent = isMin ? '미니멀 카드' : '다크 아웃트로';
+    document.querySelectorAll('[data-when-ostyle]').forEach(el => {
+      el.hidden = el.dataset.whenOstyle !== (isMin ? 'minimal' : 'summary');
+    });
   }
 
   /* 레이아웃(블러/하단 검정창)에 따라 보이는 컨트롤을 바꾼다 */
@@ -995,9 +1095,15 @@
           x.setAttribute('aria-selected', x === b ? 'true' : 'false');
         });
         $('panelCard').hidden = S.tab !== 'card';
-        $('panelOutro').hidden = S.tab !== 'outro';
+        $('panelOutro').hidden = S.tab === 'card';
+        applyOutroUI();
         renderThumbs();
         render();
+        note(S.tab === 'minimal'
+          ? '미니멀 카드 — 브랜드 · 마무리 문구 · 채널 3줄만 가운데 정렬로.'
+          : S.tab === 'outro'
+            ? '다크 아웃트로 — 영어 헤더 · 01·02·03 요약 · END 배지.'
+            : '사진을 넣으면 바로 1:1 카드가 만들어집니다.');
         toEndAnchor();
       }));
 
