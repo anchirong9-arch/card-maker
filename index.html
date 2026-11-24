@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d0e12">
-<title>1:1 카드 메이커 · 블러 · 하단 검정창 · 마무리(라일락·동물촌·심플 엔딩)</title>
-<meta name="description" content="사진 한 장(또는 여러 장)을 1080×1080 카드로 — 블러 배경 카드, 하단 검정창 + 기울임 2줄 썸네일, 1줄 코멘트, 마무리(엔딩) 카드 라일락·동물촌·심플 엔딩 버전까지 브라우저에서 바로 만들고 PNG·ZIP으로 저장">
+<title>1:1 카드 메이커 · 블러 · 하단 검정창 · 마무리(라일락·동물촌·심플 엔딩) · 심플 세트</title>
+<meta name="description" content="사진 한 장(또는 여러 장)을 1080×1080 카드로 — 블러 배경 카드, 하단 검정창 썸네일, 마무리(엔딩) 카드, 그리고 인트로·화이트 광고 카드·심플 엔딩을 한 번에 만드는 심플 세트(3종 ZIP)까지 브라우저에서 바로 만들고 PNG·ZIP으로 저장">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d0e12'/%3E%3Crect x='6' y='19' width='20' height='4' rx='2' fill='%23C084FC'/%3E%3Crect x='6' y='9' width='12' height='6' rx='2' fill='%23E9EAF0'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -19,7 +19,7 @@
     <span class="logo" aria-hidden="true"></span>
     <div class="brand-txt">
       <b>1:1 카드 메이커</b>
-      <small>1080×1080 · 썸네일 · 마무리 카드(라일락·동물촌·심플 엔딩) · PNG/ZIP</small>
+      <small>1080×1080 · 썸네일 · 마무리(라일락·동물촌·심플 엔딩) · 심플 세트 3종</small>
     </div>
   </div>
 
@@ -29,6 +29,7 @@
     <button type="button" role="tab" data-tab="minimal" aria-selected="false">③ 마무리(라일락)</button>
     <button type="button" role="tab" data-tab="animal" aria-selected="false">④ 마무리(동물촌)</button>
     <button type="button" role="tab" data-tab="simple" aria-selected="false">⑤ 심플 엔딩</button>
+    <button type="button" role="tab" data-tab="set" aria-selected="false">⑥ 심플 세트</button>
   </nav>
 </header>
 
@@ -45,6 +46,11 @@
           <span>또는 <u>여기를 눌러 선택</u> · Ctrl+V 붙여넣기</span>
           <em>1080 × 1080 · 블러 배경 자동</em>
         </div>
+      </div>
+      <div class="seg steps" id="setStepSeg" role="group" aria-label="심플 세트 단계" hidden>
+        <button type="button" data-step="intro" class="on">1. 인트로</button>
+        <button type="button" data-step="ad">2. 광고 카드</button>
+        <button type="button" data-step="end">3. 아웃트로</button>
       </div>
       <div class="stage-bar">
         <button type="button" class="btn primary" id="pngBtn">PNG 저장</button>
@@ -369,6 +375,219 @@ TikTok · @animallolvillage
       <p class="hint">맨 아래 문구보다 <b>조금 위</b>에 오른쪽 정렬로 쌓입니다(최대 6줄). 비우면 태그는 나오지 않아요.</p>
     </div>
   </section>
+
+  <!-- ══════════ ⑥ 심플 세트 패널 ══════════ -->
+  <section class="controls" id="panelSet" aria-label="심플 세트 설정" hidden>
+
+    <div class="card">
+      <h2>심플 세트 <small>인트로 · 광고 카드 · 아웃트로</small></h2>
+      <p class="hint set-step-title" id="setStepTitle">⑥-1 인트로(썸네일) · 사진 + 하단 검정 그라데이션 + 제목만</p>
+      <p class="hint">위 <b>1 · 2 · 3</b> 단계를 오가며 편집하고, <b>3종 세트 ZIP</b>을 누르면 <code>01_thumb.png</code> · <code>02_card_white.png</code> · <code>03_outro_simple.png</code> 세 장(1080×1080)이 한 번에 받아집니다.</p>
+    </div>
+
+    <div class="card">
+      <h2>사진 <small>1 · 3단계 공통</small></h2>
+      <div class="row">
+        <button type="button" class="btn" id="pickBtnT">사진 선택</button>
+        <button type="button" class="btn ghost" id="clearBtnT">모두 지우기</button>
+        <span class="muted" id="countTxtT">0장</span>
+      </div>
+      <p class="hint">인트로·아웃트로에 같은 사진이 들어갑니다. 광고 카드의 상품 사진은 <b>2단계</b>에서 따로 넣어 주세요.</p>
+      <input type="file" id="fileInputT" accept="image/*" multiple hidden>
+    </div>
+
+    <!-- ───── 1. 인트로(썸네일) ───── -->
+    <div id="setStepIntro">
+      <div class="card">
+        <h2>인트로 제목 <small>1~2줄 · 굵은 흰 글씨</small></h2>
+        <label class="field"><span>제목 1줄</span>
+          <input type="text" data-set="intro" data-key="title1" maxlength="30" placeholder="예: 우왕!">
+        </label>
+        <label class="field"><span>제목 2줄</span>
+          <input type="text" data-set="intro" data-key="title2" maxlength="30" placeholder="예: 이렇게나 많이!!!">
+        </label>
+        <p class="hint">좌측 포인트 바·서브 문구 없이 <b>제목만</b> 들어가는 썸네일입니다. 칸을 비우면 그 줄은 그리지 않고, 길면 카드 폭(950px)에 맞춰 자동으로 작아져요.</p>
+      </div>
+
+      <div class="card">
+        <h2>하단 검정 그라데이션</h2>
+        <label class="ctl"><span>높이</span><b id="setIntroGradPctVal">52%</b>
+          <input type="range" id="setIntroGradPct" data-set="intro" data-key="gradPct" data-unit="%" min="20" max="80" step="1" value="52">
+        </label>
+        <label class="ctl"><span>진하기</span><b id="setIntroGradDarkVal">100%</b>
+          <input type="range" id="setIntroGradDark" data-set="intro" data-key="gradDark" data-unit="%" min="0" max="100" step="1" value="100">
+        </label>
+        <label class="ctl"><span>맨 아래 검정 띠</span><b id="setIntroSolidVal">0%</b>
+          <input type="range" id="setIntroSolid" data-set="intro" data-key="bottomSolid" data-unit="%" min="0" max="60" step="1" value="0">
+        </label>
+        <p class="hint">기본은 사진 아래쪽만 부드럽게 검게 내려가며 제목을 받쳐 줍니다. 사진이 이미 어두우면 <b>진하기</b>를 낮추세요.</p>
+      </div>
+
+      <div class="card">
+        <h2>글자</h2>
+        <label class="ctl"><span>글자 크기</span><b id="setIntroScaleVal">100%</b>
+          <input type="range" id="setIntroScale" data-set="intro" data-key="scale" data-unit="%" min="60" max="140" step="2" value="100">
+        </label>
+        <label class="ctl"><span>최대 크기</span><b id="setIntroMaxVal">124px</b>
+          <input type="range" id="setIntroMax" data-set="intro" data-key="maxSize" data-unit="px" min="60" max="180" step="2" value="124">
+        </label>
+        <label class="ctl"><span>아래 여백</span><b id="setIntroBottomVal">86px</b>
+          <input type="range" id="setIntroBottom" data-set="intro" data-key="bottom" data-unit="px" min="24" max="320" step="2" value="86">
+        </label>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" id="setIntroStroke" data-set="intro" data-key="strokeOn"><span></span>검은 외곽선</label>
+          <b class="mini">크기에 맞춰</b>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>사진 자르기 <small>①·⑤와 같은 값</small></h2>
+        <label class="ctl"><span>상단 자르기</span><b id="qTrimTopVal">0%</b>
+          <input type="range" id="qTrimTop" min="0" max="30" step="1" value="0">
+        </label>
+        <label class="ctl"><span>하단 자르기</span><b id="qTrimBottomVal">0%</b>
+          <input type="range" id="qTrimBottom" min="0" max="30" step="1" value="0">
+        </label>
+        <p class="hint">인트로·아웃트로 모두 <b>꽉 채우기(cover)</b>입니다. 캡처의 흰 여백·자막 띠를 잘라낼 때 씁니다.</p>
+      </div>
+    </div>
+
+    <!-- ───── 2. 광고 카드(화이트) ───── -->
+    <div id="setStepAd" hidden>
+      <div class="card">
+        <h2>커뮤니티 글</h2>
+        <label class="field"><span>카테고리 뱃지</span>
+          <input type="text" data-set="ad" data-key="pill" maxlength="18" placeholder="예: 집사 · 일상">
+        </label>
+        <label class="field"><span>번호</span>
+          <input type="text" data-set="ad" data-key="no" maxlength="10" placeholder="예: 035번">
+        </label>
+        <label class="field"><span>글 제목</span>
+          <input type="text" data-set="ad" data-key="title" maxlength="40" placeholder="예: 길냥이 밥그릇 놔줬더니 안 떠남">
+        </label>
+        <label class="field"><span>메타</span>
+          <input type="text" data-set="ad" data-key="meta" maxlength="40" placeholder="예: 익명 · 방금 전 · 조회 1,842">
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>상품 이미지</h2>
+        <div class="row">
+          <button type="button" class="btn" id="adPickBtn">상품 이미지 선택</button>
+          <button type="button" class="btn ghost" id="adClearBtn" hidden>지우기</button>
+          <img id="adThumb" class="ad-thumb" alt="상품 이미지 미리보기" hidden>
+        </div>
+        <div class="seg" id="setCropSeg" role="group" aria-label="상품 이미지 맞춤">
+          <button type="button" data-crop="center" class="on">가운데 크롭</button>
+          <button type="button" data-crop="fit">여백 (원본 비율)</button>
+        </div>
+        <p class="hint">선택하지 않으면 연회색 <b>‘상품 이미지’</b> 자리만 남습니다. 가운데 크롭은 정사각으로 잘라 꽉 채웁니다.</p>
+        <input type="file" id="adFileInput" accept="image/*" hidden>
+      </div>
+
+      <div class="card">
+        <h2>상품 정보</h2>
+        <label class="field"><span>상품명 1줄</span>
+          <input type="text" data-set="ad" data-key="name1" maxlength="30" placeholder="예: 티티펫 스텐 펫 식기">
+        </label>
+        <label class="field"><span>상품명 2줄</span>
+          <input type="text" data-set="ad" data-key="name2" maxlength="30" placeholder="예: 15.5cm · 2개입">
+        </label>
+        <label class="field"><span>가격</span>
+          <input type="text" data-set="ad" data-key="price" maxlength="20" placeholder="예: 4,790원">
+        </label>
+        <label class="field"><span>정가 · 할인 / 배송</span>
+          <input type="text" data-set="ad" data-key="sub1" maxlength="40" placeholder="예: 1개당 2,395원">
+        </label>
+        <label class="field">
+          <input type="text" data-set="ad" data-key="sub2" maxlength="40" placeholder="예: 로켓배송 · 무료배송">
+        </label>
+        <label class="field"><span>스펙 1줄</span>
+          <input type="text" data-set="ad" data-key="spec1" maxlength="44" placeholder="예: 스테인리스 · 미끄럼방지 고무패킹">
+        </label>
+        <label class="field"><span>스펙 2줄</span>
+          <input type="text" data-set="ad" data-key="spec2" maxlength="44" placeholder="예: 야외에 둬도 안 깨짐">
+        </label>
+        <label class="field"><span>상품평 줄</span>
+          <input type="text" data-set="ad" data-key="review" maxlength="48" placeholder="예: 상품평 1,132개 · 한 달간 300명+ 구매">
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>댓글 <small>아래 고정 · 정중앙</small></h2>
+        <label class="field"><span>댓글 제목</span>
+          <input type="text" data-set="ad" data-key="label" maxlength="12" placeholder="예: 댓글 2">
+        </label>
+        <label class="field"><span>작성자 1</span>
+          <input type="text" data-set="ad" data-key="a1" maxlength="12" placeholder="예: ㅇㅇ">
+        </label>
+        <label class="field"><span>내용 1</span>
+          <input type="text" data-set="ad" data-key="c1" maxlength="60" placeholder="댓글 내용">
+        </label>
+        <label class="field"><span>작성자 2</span>
+          <input type="text" data-set="ad" data-key="a2" maxlength="12" placeholder="예: 익명">
+        </label>
+        <label class="field"><span>내용 2</span>
+          <input type="text" data-set="ad" data-key="c2" maxlength="60" placeholder="댓글 내용">
+        </label>
+        <p class="hint">내용을 비우면 그 댓글 박스는 그리지 않습니다. 박스 높이는 닉네임·본문의 <b>잉크 높이</b>로 계산해 위·아래 여백이 같아지게 맞춥니다.</p>
+      </div>
+    </div>
+
+    <!-- ───── 3. 아웃트로(심플 엔딩) ───── -->
+    <div id="setStepEnd" hidden>
+      <div class="card">
+        <h2>아웃트로 문구 <small>가운데 두 줄</small></h2>
+        <label class="field"><span>1줄 <em>굵은 흰 글씨</em></span>
+          <input type="text" data-set="end" data-key="line1" maxlength="40">
+        </label>
+        <label class="field"><span>2줄</span>
+          <input type="text" data-set="end" data-key="line2" maxlength="40">
+        </label>
+        <label class="field"><span>채널 태그 <em>한 줄에 하나씩 · 오른쪽 정렬</em></span>
+          <textarea rows="4" data-set="end" data-key="chans"></textarea>
+        </label>
+        <p class="hint">⑤ 심플 엔딩과 같은 규격입니다(사진 꽉 채우기 + 하단 그라데이션 + 두 줄 + 우측 아래 채널 태그).</p>
+      </div>
+
+      <div class="card">
+        <h2>배경 · 글자</h2>
+        <label class="ctl"><span>사진 흐림</span><b id="setEndBlurVal">0px</b>
+          <input type="range" id="setEndBlur" data-set="end" data-key="blur" data-unit="px" min="0" max="24" step="1" value="0">
+        </label>
+        <label class="ctl"><span>사진 어둡기</span><b id="setEndDarkVal">0%</b>
+          <input type="range" id="setEndDark" data-set="end" data-key="dark" data-unit="%" min="0" max="70" step="1" value="0">
+        </label>
+        <label class="ctl"><span>그라데이션 높이</span><b id="setEndGradPctVal">38%</b>
+          <input type="range" id="setEndGradPct" data-set="end" data-key="gradPct" data-unit="%" min="20" max="65" step="1" value="38">
+        </label>
+        <label class="ctl"><span>그라데이션 진하기</span><b id="setEndGradDarkVal">90%</b>
+          <input type="range" id="setEndGradDark" data-set="end" data-key="gradDark" data-unit="%" min="0" max="100" step="1" value="90">
+        </label>
+        <label class="ctl"><span>글자 크기</span><b id="setEndScaleVal">100%</b>
+          <input type="range" id="setEndScale" data-set="end" data-key="scale" data-unit="%" min="70" max="140" step="2" value="100">
+        </label>
+        <label class="ctl"><span>아래 여백</span><b id="setEndBottomVal">96px</b>
+          <input type="range" id="setEndBottom" data-set="end" data-key="bottom" data-unit="px" min="40" max="280" step="4" value="96">
+        </label>
+        <label class="ctl"><span>태그 크기</span><b id="setEndChSizeVal">25px</b>
+          <input type="range" id="setEndChSize" data-set="end" data-key="chSize" data-unit="px" min="18" max="34" step="1" value="25">
+        </label>
+        <label class="ctl"><span>문구 위 간격</span><b id="setEndChGapVal">56px</b>
+          <input type="range" id="setEndChGap" data-set="end" data-key="chGap" data-unit="px" min="16" max="220" step="4" value="56">
+        </label>
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" id="setEndStroke" data-set="end" data-key="strokeOn"><span></span>검은 외곽선</label>
+          <b id="setEndStrokeWVal" class="mini">4px</b>
+        </div>
+        <input type="range" id="setEndStrokeW" data-set="end" data-key="strokeW" data-unit="px" min="0" max="8" step="1" value="4" aria-label="외곽선 두께">
+        <div class="toggle-row">
+          <label class="switch"><input type="checkbox" id="setEndShadow" data-set="end" data-key="shadowOn"><span></span>그림자</label>
+          <b class="mini">부드럽게</b>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="foot">
@@ -379,6 +598,6 @@ TikTok · @animallolvillage
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="app.js?v=18"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>

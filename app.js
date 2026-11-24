@@ -79,12 +79,64 @@
       line1: '여러분은 어떻게 생각하시나요?',
       line2: '댓글로 의견을 남겨주세요!',
       chans: 'YouTube · 싱글벙글 동물촌\nTikTok · @animallolvillage\n리틀리 · litt.ly/anchirong'
+    },
+    // ⑥ 심플 세트 — 1. 인트로(썸네일) · 2. 광고 카드(화이트) · 3. 아웃트로(심플 엔딩)
+    setStep: 'intro',
+    setIntro: {
+      title1: '우왕!',
+      title2: '이렇게나 많이!!!',
+      gradPct: 52,        // 하단 검정 그라데이션 높이(%)
+      gradDark: 100,      // 진하기(%)
+      bottomSolid: 0,     // 맨 아래 검정 띠(%)
+      scale: 100,
+      bottom: 86,         // 마지막 줄 잉크 아래 여백(px)
+      maxSize: 124,
+      strokeOn: true
+    },
+    setAd: {
+      pill: '집사 · 일상',
+      no: '035번',
+      title: '길냥이 밥그릇 놔줬더니 안 떠남',
+      meta: '익명 · 방금 전 · 조회 1,842',
+      name1: '티티펫 스텐 펫 식기',
+      name2: '15.5cm · 2개입',
+      price: '4,790원',
+      sub1: '1개당 2,395원',
+      sub2: '로켓배송 · 무료배송',
+      spec1: '스테인리스 · 미끄럼방지 고무패킹',
+      spec2: '야외에 둬도 안 깨짐',
+      review: '상품평 1,132개 · 한 달간 300명+ 구매',
+      label: '댓글 2',
+      a1: 'ㅇㅇ',
+      c1: '그릇 2개에 4,790원이면 다이소보다 싸네;;',
+      a2: '익명',
+      c2: '스텐이라 야외에 놔도 안 깨져서 길냥이용으로 딱',
+      crop: 'center'      // center = 가운데 정사각 크롭, fit = 원본 비율 그대로
+    },
+    setEnd: {
+      line1: '여러분은 어떻게 생각하시나요?',
+      line2: '댓글로 의견을 남겨주세요!',
+      chans: 'YouTube · 싱글벙글 동물촌\nTikTok · @animallolvillage\n리틀리 · litt.ly/anchirong',
+      gradOn: true,
+      gradPct: 38,
+      gradDark: 90,
+      scale: 100,
+      bottom: 96,
+      strokeOn: true,
+      strokeW: 4,
+      shadowOn: true,
+      chSize: 25,
+      chGap: 56,
+      blur: 0,
+      dark: 0
     }
   };
 
   const items = [];      // {name, img, url}
   let active = -1;
   let fontsReady = false;
+  let adImg = null;      // ⑥ 광고 카드의 상품 이미지 (저장하지 않음)
+  let adUrl = null;
 
   /* ───────── 저장/복원 ───────── */
   const STORE_KEY = 'cm.v1';
@@ -101,11 +153,15 @@
       if (!raw) return;
       const d = JSON.parse(raw);
       for (const k of Object.keys(S)) {
-        if (k === 'tab' || k === 'outro' || k === 'simple') continue;
+        if (k === 'tab' || k === 'outro' || k === 'simple' || k === 'setStep'
+          || k === 'setIntro' || k === 'setAd' || k === 'setEnd') continue;
         if (d[k] !== undefined) S[k] = d[k];
       }
       if (d.outro) Object.assign(S.outro, d.outro);
       if (d.simple) Object.assign(S.simple, d.simple);
+      if (d.setIntro) Object.assign(S.setIntro, d.setIntro);
+      if (d.setAd) Object.assign(S.setAd, d.setAd);
+      if (d.setEnd) Object.assign(S.setEnd, d.setEnd);
       // 예전 기본값(영어 헤더)만 국문 브랜드로 옮긴다 — 미니멀 카드는 영어 헤더를 쓰지 않음
       if (S.outro.brand === 'SINGULBUNGUL ANIMAL VILLAGE') S.outro.brand = '싱글벙글 동물촌';
     } catch (e) { /* 무시 */ }
@@ -246,8 +302,9 @@
       box.appendChild(b);
     });
     $('countTxt').textContent = `${items.length}장`;
-    const isPhotoTab = S.tab === 'card' || S.tab === 'simple';
+    const isPhotoTab = S.tab === 'card' || S.tab === 'simple' || S.tab === 'set';
     $('countTxtS').textContent = `${items.length}장`;
+    $('countTxtT').textContent = `${items.length}장`;
     $('stageEmpty').hidden = items.length > 0 || !isPhotoTab;
     $('zipBtn').disabled = items.length === 0 || !isPhotoTab;
     $('thumbs').style.display = isPhotoTab ? '' : 'none';
@@ -1032,14 +1089,14 @@
     g.fillText('END', px + 23, fy + 2);
   }
 
-  /* ───────── ⑤ 심플 엔딩 ───────── */
+  /* ───────── ⑤ 심플 엔딩 / ⑥ 아웃트로 (공통) ───────── */
   const SIMPLE_BG = '#111216';
 
   /* 아래 35~40%를 자연스럽게 어둡게 — 사진 위 글씨 가독성 */
-  function drawSimpleGradient(g) {
-    if (!S.simpleGradOn) return;
-    const h = H * clamp(Number(S.simpleGradPct) || 0, 5, 100) / 100;
-    const o = clamp(Number(S.simpleGradDark) || 0, 0, 100) / 100;
+  function drawSimpleGradient(g, c) {
+    if (!c.gradOn) return;
+    const h = H * clamp(Number(c.gradPct) || 0, 5, 100) / 100;
+    const o = clamp(Number(c.gradDark) || 0, 0, 100) / 100;
     if (h <= 0 || o <= 0) return;
     const grd = g.createLinearGradient(0, H - h, 0, H);
     grd.addColorStop(0, 'rgba(0,0,0,0)');
@@ -1052,20 +1109,20 @@
   }
 
   /* 오른쪽 정렬 한 줄 — 얇은 검은 외곽선 + 부드러운 그림자 */
-  function drawSimpleTag(g, text, right, midY, size) {
+  function drawSimpleTag(g, text, right, midY, size, c) {
     g.save();
     g.font = `700 ${size}px ${F_NOTO}`;
     g.textAlign = 'right';
     g.textBaseline = 'middle';
-    if (S.simpleShadow) {
+    if (c.shadowOn) {
       g.shadowColor = 'rgba(0,0,0,.70)';
       g.shadowBlur = Math.max(6, Math.round(size * 0.45));
       g.shadowOffsetY = 2;
     }
-    if (S.simpleStroke && S.simpleStrokeW > 0) {
+    if (c.strokeOn && c.strokeW > 0) {
       g.lineJoin = 'round';
       g.miterLimit = 2;
-      g.lineWidth = Math.max(2, S.simpleStrokeW * 1.4);
+      g.lineWidth = Math.max(2, c.strokeW * 1.4);
       g.strokeStyle = 'rgba(0,0,0,.88)';
       g.strokeText(text, right, midY);
       g.shadowColor = 'transparent';
@@ -1084,8 +1141,109 @@
     g.restore();
   }
 
-  /* 1080×1080 — 사진 위 가운데 두 줄 문구 + 오른쪽 아래 채널 태그 */
-  function drawSimpleCard(g, img) {
+  /* 사진을 1:1로 꽂 채우기 (상·하단 자르기 적용) */
+  function drawCoverPhoto(g, img) {
+    const t = clamp(S.trimTop, 0, 45) / 100, b = clamp(S.trimBottom, 0, 45) / 100;
+    const sy = img.height * t;
+    const srcH = Math.max(8, img.height * (1 - t - b));
+    const sc = Math.max(W / img.width, H / srcH);
+    const dw = img.width * sc, dh = srcH * sc;
+    g.save();
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(img, 0, sy, img.width, srcH, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    g.restore();
+  }
+
+  /* 글자 잉크 크기 — ctx.measureText 의 actualBoundingBox* 기준 */
+  function inkOf(g, s, font) {
+    g.save();
+    g.font = font;
+    g.textBaseline = 'alphabetic';
+    g.textAlign = 'left';
+    const m = g.measureText(s || '한');
+    g.restore();
+    const asc = m.actualBoundingBoxAscent || 0;
+    const desc = m.actualBoundingBoxDescent || 0;
+    const left = m.actualBoundingBoxLeft || 0;
+    const right = m.actualBoundingBoxRight || m.width;
+    return { asc, desc, h: asc + desc, left, w: left + right };
+  }
+
+  /* 잉크 위변을 inkTop 에 정확히 맞춰 그린다 (Pillow getbbox 배치와 같은 결) */
+  function textInk(g, x, inkTop, s, font, fill, double) {
+    if (s === '' || s == null) return;
+    g.save();
+    g.font = font;
+    g.textBaseline = 'alphabetic';
+    g.textAlign = 'left';
+    const m = g.measureText(s);
+    const asc = m.actualBoundingBoxAscent || 0;
+    const left = m.actualBoundingBoxLeft || 0;
+    g.fillStyle = fill;
+    g.fillText(s, x + left, inkTop + asc);
+    if (double) g.fillText(s, x + left + 1, inkTop + asc);   // 1px 겹쳐 굵게(카드 스크립트와 같음)
+    g.restore();
+  }
+
+  /* 가운데 정렬 — 잉크 폭 기준 */
+  function textInkCenter(g, inkTop, s, font, opt) {
+    if (!s) return;
+    g.save();
+    g.font = font;
+    g.textBaseline = 'alphabetic';
+    g.textAlign = 'left';
+    const m = g.measureText(s);
+    const asc = m.actualBoundingBoxAscent || 0;
+    const left = m.actualBoundingBoxLeft || 0;
+    const right = m.actualBoundingBoxRight || m.width;
+    const x = (W - (left + right)) / 2 + left;
+    if (opt.stroke > 0) {
+      g.lineJoin = 'round';
+      g.miterLimit = 2;
+      g.lineWidth = opt.stroke;
+      g.strokeStyle = opt.strokeFill || '#000000';
+      g.strokeText(s, x, inkTop + asc);
+    }
+    g.fillStyle = opt.fill || '#ffffff';
+    g.fillText(s, x, inkTop + asc);
+    g.restore();
+  }
+
+  /* 폭 제한에 맞춰 글자 크기를 1px씩 줄인다 (fit_font) */
+  function fitFontSize(g, texts, fontOf, start, limit, min) {
+    let size = Math.round(start);
+    while (size > min) {
+      g.font = fontOf(size);
+      if (texts.every(t => !t || g.measureText(t).width <= limit)) break;
+      size -= 1;
+    }
+    return Math.max(min, size);
+  }
+
+  function simpleCfg() {
+    return {
+      gradOn: !!S.simpleGradOn, gradPct: S.simpleGradPct, gradDark: S.simpleGradDark,
+      scale: S.simpleScale, bottom: S.simpleBottom,
+      strokeOn: !!S.simpleStroke, strokeW: S.simpleStrokeW, shadowOn: !!S.simpleShadow,
+      chSize: S.simpleChSize, chGap: S.simpleChGap, blur: S.simpleBlur, dark: S.simpleDark,
+      line1: S.simple.line1, line2: S.simple.line2, chans: S.simple.chans
+    };
+  }
+
+  function setEndCfg() {
+    const e = S.setEnd;
+    return {
+      gradOn: !!e.gradOn, gradPct: e.gradPct, gradDark: e.gradDark,
+      scale: e.scale, bottom: e.bottom,
+      strokeOn: !!e.strokeOn, strokeW: e.strokeW, shadowOn: !!e.shadowOn,
+      chSize: e.chSize, chGap: e.chGap, blur: e.blur, dark: e.dark,
+      line1: e.line1, line2: e.line2, chans: e.chans
+    };
+  }
+
+  /* 1080×1080 — 사진 위 가운데 두 줄 문구 + 오른쪽 아래 채널 태그 (⑤·⑥ 공통) */
+  function drawSimpleCore(g, img, c) {
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, W, H);
     g.fillStyle = SIMPLE_BG;
@@ -1093,31 +1251,25 @@
 
     // 사진: 1080×1080 꽉 채우기 (상·하단 자르기 적용)
     if (img) {
-      const t = clamp(S.trimTop, 0, 45) / 100, b = clamp(S.trimBottom, 0, 45) / 100;
-      const sy = img.height * t;
-      const srcH = Math.max(8, img.height * (1 - t - b));
-      const sc = Math.max(W / img.width, H / srcH);
-      const dw = img.width * sc, dh = srcH * sc;
-      const blurPx = clamp(Number(S.simpleBlur) || 0, 0, 24);
+      const blurPx = clamp(Number(c.blur) || 0, 0, 24);
       g.save();
-      g.imageSmoothingEnabled = true;
-      g.imageSmoothingQuality = 'high';
       if (blurPx > 0 && ctxFilterOK(g)) g.filter = `blur(${blurPx}px)`;
-      g.drawImage(img, 0, sy, img.width, srcH, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      drawCoverPhoto(g, img);
       g.restore();
-      const dim = clamp(Number(S.simpleDark) || 0, 0, 80) / 100;
+      g.filter = 'none';
+      const dim = clamp(Number(c.dark) || 0, 0, 80) / 100;
       if (dim > 0) {
         g.fillStyle = `rgba(0,0,0,${dim})`;
         g.fillRect(0, 0, W, H);
       }
     }
 
-    drawSimpleGradient(g);
+    drawSimpleGradient(g, c);
 
     // 가운데 두 줄
-    const k = clamp(S.simpleScale, 60, 160) / 100;
-    const l1 = (S.simple.line1 || '').trim();
-    const l2 = (S.simple.line2 || '').trim();
+    const k = clamp(c.scale, 60, 160) / 100;
+    const l1 = (c.line1 || '').trim();
+    const l2 = (c.line2 || '').trim();
     const maxW = W - 170;
     const seg1 = [{ t: l1, a: false }], seg2 = [{ t: l2, a: false }];
     const s1 = l1 ? fitSize(g, [seg1], (s) => `900 ${s}px ${F_NOTO}`, maxW, Math.round(52 * k), Math.round(24 * k)) : 0;
@@ -1128,13 +1280,13 @@
     const gap12 = Math.round(14 * k);
     const blockH = (ink1 ? ink1.h : 0) + (ink1 && ink2 ? gap12 : 0) + (ink2 ? ink2.h : 0);
 
-    const bottomPad = clamp(Number(S.simpleBottom) || 0, 0, 400);
+    const bottomPad = clamp(Number(c.bottom) || 0, 0, 400);
     const blockTop = H - bottomPad - blockH;
 
     const opt = {
-      strokeOn: !!S.simpleStroke,
-      strokeWidth: clamp(Number(S.simpleStrokeW) || 0, 0, 10),
-      shadowOn: !!S.simpleShadow,
+      strokeOn: !!c.strokeOn,
+      strokeWidth: clamp(Number(c.strokeW) || 0, 0, 10),
+      shadowOn: !!c.shadowOn,
       shadowBlur: 16,
       shadowY: 4,
       shadowOpacity: 0.6,
@@ -1154,21 +1306,278 @@
     }
 
     // 오른쪽 아래 채널 태그 (문구 블록보다 살짝 위)
-    const chans = (S.simple.chans || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
+    const chans = (c.chans || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
     if (chans.length) {
-      const chSize = Math.round(clamp(Number(S.simpleChSize) || 25, 14, 40));
+      const chSize = Math.round(clamp(Number(c.chSize) || 25, 14, 40));
       const lh = chSize * 1.5;
-      const chGap = clamp(Number(S.simpleChGap) || 0, 0, 300);
+      const chGap = clamp(Number(c.chGap) || 0, 0, 300);
       const chBottom = blockH > 0 ? blockTop - chGap : H - bottomPad;
       let top = Math.max(28, chBottom - chans.length * lh);
       const right = W - 64;
-      chans.forEach((line, i) => drawSimpleTag(g, line, right, top + i * lh + lh / 2, chSize));
+      chans.forEach((line, i) => drawSimpleTag(g, line, right, top + i * lh + lh / 2, chSize, c));
+    }
+  }
+
+  function drawSimpleCard(g, img) { drawSimpleCore(g, img, simpleCfg()); }
+  function drawSetEndCard(g, img) { drawSimpleCore(g, img, setEndCfg()); }
+
+  /* ───────── ⑥-1 인트로(썸네일) ─────────
+     build_outro_simple.py 의 render_thumb(01_thumb) 규격 — 좌측 라일락 바·서브 1줄 없이
+     사진 꽉 채우기 + 아래쪽 부드러운 검정 그라데이션 + 가운데 굵은 흰 제목 1~2줄 */
+  function drawSetIntro(g, img) {
+    const c = S.setIntro;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = SIMPLE_BG;
+    g.fillRect(0, 0, W, H);
+    if (img) drawCoverPhoto(g, img);
+
+    const pct = clamp(Number(c.gradPct) || 0, 5, 100) / 100;
+    const o = clamp(Number(c.gradDark) || 0, 0, 100) / 100;
+    const gh = Math.max(1, H * pct);
+    if (o > 0) {
+      const grd = g.createLinearGradient(0, H - gh, 0, H);
+      [[0, 0], [0.25, 0.22], [0.5, 0.5], [0.75, 0.78], [1, 0.97]].forEach(([t, a]) => {
+        grd.addColorStop(t, `rgba(0,0,0,${o * a})`);
+      });
+      g.fillStyle = grd;
+      g.fillRect(0, H - gh, W, gh);
+    }
+    const solid = clamp(Number(c.bottomSolid) || 0, 0, 60) / 100;
+    if (solid > 0) {
+      g.fillStyle = '#000000';
+      g.fillRect(0, H * (1 - solid), W, H * solid);
+    }
+
+    const lines = [c.title1, c.title2].map(t => (t || '').trim()).filter(Boolean);
+    if (!lines.length) return;
+
+    const k = clamp(Number(c.scale) || 100, 50, 200) / 100;
+    const maxSize = Math.round((Number(c.maxSize) || 124) * k);
+    const minSize = Math.max(24, Math.round(52 * k));
+    const maxW = W - 130;
+    const bottom = clamp(Number(c.bottom) || 0, 0, 400);
+    const gap = Math.round(12 * k);
+
+    let y = H - bottom;
+    const placed = [];
+    for (let i = lines.length - 1; i >= 0; i--) {          // 아래 줄부터 위로 쌓기
+      const s = lines[i];
+      const size = fitFontSize(g, [s], (x) => `400 ${x}px ${F_BLACK}`, maxSize, maxW, minSize);
+      const ink = inkOf(g, s, `400 ${size}px ${F_BLACK}`);
+      y -= ink.h;
+      placed.push({ s, size, top: y });
+      y -= gap;
+    }
+    for (const p of placed) {
+      const stroke = c.strokeOn ? Math.max(5, Math.round(p.size * 0.055)) * 2 : 0;
+      textInkCenter(g, p.top, p.s, `400 ${p.size}px ${F_BLACK}`,
+        { stroke, strokeFill: '#000000', fill: '#ffffff' });
+    }
+  }
+
+  /* ───────── ⑥-2 광고 카드 (화이트 톤 커뮤니티) ─────────
+     downloads/build_card_white.py + card_style.py(THEME_LIGHT) 를 캔버스로 옮긴 것 */
+  const WH = {
+    bg: '#FFFFFF', card: '#F8F9FA', edge: '#E5E7EB',
+    main: '#111827', sub: '#6B7280', muted: '#9CA3AF', spec: '#374151',
+    pillText: '#374151', pillEdge: '#D1D5DB'
+  };
+
+  function hline(g, x1, x2, y, color, width) {
+    g.save();
+    g.strokeStyle = color;
+    g.lineWidth = width;
+    g.beginPath();
+    g.moveTo(x1, y);
+    g.lineTo(x2, y);
+    g.stroke();
+    g.restore();
+  }
+
+  /* 상품 사진 타일 — center(가운데 정사각 크롭) / fit(원본 비율) */
+  function drawProductTile(g, img, x, y, box, mode) {
+    g.save();
+    roundRect(g, x, y, box, box, 22);
+    g.clip();
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    if (mode === 'fit') {
+      g.fillStyle = '#FFFFFF';
+      g.fillRect(x, y, box, box);
+      const sc = Math.min(box / img.width, box / img.height);
+      const dw = img.width * sc, dh = img.height * sc;
+      g.drawImage(img, x + (box - dw) / 2, y + (box - dh) / 2, dw, dh);
+    } else {
+      const s = Math.min(img.width, img.height);
+      g.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, x, y, box, box);
+    }
+    g.restore();
+    g.save();
+    roundRect(g, x, y, box, box, 22);
+    g.lineWidth = 2;
+    g.strokeStyle = WH.edge;
+    g.stroke();
+    g.restore();
+  }
+
+  /* 댓글 영역 — 카드 하단 기준으로 잉크 높이·대칭 패딩을 계산해 정중앙에 쌓는다.
+     (build_card_white 의 draw_comments / THEME_LIGHT 와 같은 규격·같은 여백 프리셋) */
+  function drawWhiteComments(g, minY, comments, label, fontOf) {
+    const pad = 68;
+    const PAD_X = 30, GAP = 8;
+    const cardBottom = H - 24;
+    const limit = W - pad * 2 - PAD_X * 2;
+
+    const bSize = fitFontSize(g, comments.map(c => c[1]), fontOf, 29, limit, 13);
+    const bodyFont = fontOf(bSize), authorFont = fontOf(24), labelFont = fontOf(30);
+    const labelInk = inkOf(g, label, labelFont);
+    const alh = Math.max(...comments.map(c => inkOf(g, c[0] || '익명', authorFont).h));
+
+    const presets = [[18, 21, 18, 14], [16, 18, 14, 12], [14, 14, 12, 10]];
+    let chosen = presets[0], rows = [], boxH = 0, dividerY = minY;
+    for (let i = 0; i < presets.length; i++) {
+      const [padY, above, labelGap, boxGap] = presets[i];
+      rows = comments.map(c => {
+        const bh = inkOf(g, c[1], bodyFont).h;
+        return { au: c[0] || '익명', body: c[1], bh };
+      });
+      boxH = rows.reduce((m, r) => Math.max(m, padY * 2 + alh + GAP + r.bh), 0);
+      const blockH = labelInk.h + labelGap + rows.length * boxH + (rows.length - 1) * boxGap;
+      const dy = cardBottom - 56 - above - blockH;
+      if (dy >= minY - 8 || i === presets.length - 1) {
+        dividerY = Math.max(dy, minY);
+        chosen = presets[i];
+        break;
+      }
+    }
+    const [padY, above, labelGap, boxGap] = chosen;
+
+    hline(g, pad, W - pad, dividerY, WH.edge, 2);
+
+    let y = dividerY + above;
+    textInk(g, pad, y, label, labelFont, WH.main, true);
+    y += labelInk.h + labelGap;
+
+    for (const r of rows) {
+      g.save();
+      roundRect(g, pad, y, W - pad * 2, boxH, 16);
+      g.fillStyle = '#FFFFFF';
+      g.fill();
+      g.lineWidth = 2;
+      g.strokeStyle = WH.edge;
+      g.stroke();
+      g.restore();
+      const inner = y + (boxH - (padY * 2 + alh + GAP + r.bh)) / 2 + padY;
+      const ah = inkOf(g, r.au, authorFont).h;
+      textInk(g, pad + PAD_X, inner + alh - ah, r.au, authorFont, WH.sub);
+      textInk(g, pad + PAD_X, inner + alh + GAP, r.body, bodyFont, WH.main);
+      y += boxH + boxGap;
+    }
+  }
+
+  function drawWhiteAdCard(g) {
+    const c = S.setAd;
+    const fontOf = (s) => `400 ${s}px ${F_NOTO}`;
+    const pad = 68;
+
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = WH.bg;
+    g.fillRect(0, 0, W, H);
+
+    // 페이지 카드
+    g.save();
+    roundRect(g, 24, 24, W - 48, H - 48, 32);
+    g.fillStyle = WH.card;
+    g.fill();
+    g.lineWidth = 2;
+    g.strokeStyle = WH.edge;
+    g.stroke();
+    g.restore();
+
+    // 헤더: 카테고리 알약 뱃지 + 번호
+    const pillTop = 56, pillH = 46, pillPadX = 20;
+    const pillFont = fontOf(26);
+    const pi = inkOf(g, c.pill, pillFont);
+    const pillW = pillPadX * 2 + pi.w;
+    g.save();
+    roundRect(g, pad, pillTop, pillW, pillH, 13);
+    g.fillStyle = '#FFFFFF';
+    g.fill();
+    g.lineWidth = 2;
+    g.strokeStyle = WH.pillEdge;
+    g.stroke();
+    g.restore();
+    textInk(g, pad + pillPadX, pillTop + (pillH - pi.h) / 2, c.pill, pillFont, WH.pillText);
+
+    const noFont = fontOf(28);
+    const ni = inkOf(g, c.no, noFont);
+    textInk(g, W - pad - ni.w, pillTop + (pillH - ni.h) / 2, c.no, noFont, WH.muted);
+
+    // 글 제목 · 메타
+    const tSize = fitFontSize(g, [c.title], fontOf, 47, W - pad * 2, 34);
+    textInk(g, pad, 136, c.title, fontOf(tSize), WH.main, true);
+
+    const metaTop = 136 + tSize + 18;
+    textInk(g, pad, metaTop, c.meta, fontOf(25), WH.sub);
+    const divY = metaTop + 46;
+    hline(g, pad, W - pad, divY, WH.edge, 2);
+
+    // 상품 이미지
+    const box = 356, px = pad, py = divY + 28;
+    if (adImg) {
+      drawProductTile(g, adImg, px, py, box, c.crop);
+    } else {
+      g.save();
+      roundRect(g, px, py, box, box, 22);
+      g.fillStyle = '#F1F2F4';
+      g.fill();
+      g.lineWidth = 2;
+      g.strokeStyle = WH.edge;
+      g.stroke();
+      g.font = fontOf(24);
+      g.fillStyle = WH.muted;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';   // '상품 이미지' 자리표시 — 글자 상자 기준 중앙이면 충분
+      g.fillText('상품 이미지', px + box / 2, py + box / 2);
+      g.restore();
+    }
+
+    // 상품 텍스트
+    const tx = px + box + 38, avail = W - pad - tx;
+    const nSize = fitFontSize(g, [c.name1, c.name2], fontOf, 36, avail, 24);
+    textInk(g, tx, py + 2, c.name1, fontOf(nSize), WH.main, true);
+    textInk(g, tx, py + 2 + nSize + 6, c.name2, fontOf(nSize), WH.main, true);
+
+    const priceY = py + 2 + (nSize + 6) * 2 + 22;
+    textInk(g, tx, priceY, c.price, fontOf(58), WH.main, true);
+    textInk(g, tx, priceY + 78, c.sub1, fontOf(26), WH.sub);
+    textInk(g, tx, priceY + 116, c.sub2, fontOf(26), WH.sub);
+    hline(g, tx, W - pad, priceY + 166, WH.edge, 2);
+
+    const sSize = fitFontSize(g, [c.spec1, c.spec2], fontOf, 25, avail, 19);
+    textInk(g, tx, priceY + 182, c.spec1, fontOf(sSize), WH.spec);
+    textInk(g, tx, priceY + 220, c.spec2, fontOf(sSize), WH.spec);
+
+    const rSize = fitFontSize(g, [c.review], fontOf, 24, avail, 18);
+    textInk(g, tx, priceY + 266, c.review, fontOf(rSize), WH.muted);
+    const revBottom = priceY + 266 + 32;
+
+    // 댓글 2개 (비워 둔 칸은 그리지 않음)
+    const comments = [[c.a1, c.c1], [c.a2, c.c2]]
+      .map(([a, b]) => [(a || '').trim() || '익명', (b || '').trim()])
+      .filter(([, b]) => b);
+    if (comments.length) {
+      const label = (c.label || '').trim() || `댓글 ${comments.length}`;
+      drawWhiteComments(g, Math.max(py + box + 40, revBottom + 42), comments, label, fontOf);
     }
   }
 
   /* ───────── 렌더 ───────── */
   function render() {
     const g = canvas.getContext('2d');
+    $('zipBtn').textContent = S.tab === 'set' ? '3종 세트 ZIP' : '전체 ZIP';
     if (S.tab === 'outro' || S.tab === 'minimal' || S.tab === 'animal') {
       const OH = S.tab === 'animal' ? 1080 : outroHeight();
       if (canvas.height !== OH) canvas.height = OH;
@@ -1184,6 +1593,23 @@
         : S.tab === 'minimal'
           ? `1080 × ${OH} · 마무리(라일락)`
           : `1080 × ${OH} · 마무리(다크)`;
+      if (!fontsReady) note('폰트 불러오는 중…');
+      return;
+    }
+    if (S.tab === 'set') {
+      if (canvas.height !== H) canvas.height = H;
+      if (canvas.width !== W) canvas.width = W;
+      $('stage').style.aspectRatio = '1 / 1';
+      const img = active >= 0 && items[active] ? items[active].img : null;
+      if (S.setStep === 'ad') drawWhiteAdCard(g);
+      else if (S.setStep === 'intro') drawSetIntro(g, img);
+      else drawSetEndCard(g, img);
+      $('stageEmpty').hidden = true;
+      $('pngBtn').disabled = false;
+      $('zipBtn').disabled = false;
+      $('zipBtn').textContent = '3종 세트 ZIP';
+      $('dims').textContent = '1080 × 1080 · ' + (S.setStep === 'ad' ? '광고 카드(화이트)'
+        : S.setStep === 'intro' ? '인트로(썸네일)' : '아웃트로(심플 엔딩)');
       if (!fontsReady) note('폰트 불러오는 중…');
       return;
     }
@@ -1217,6 +1643,16 @@
 
   /* ───────── 저장 ───────── */
   async function savePNG() {
+    if (S.tab === 'set') {
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      if (!blob) { toast('저장 실패 — 다시 시도해 주세요'); return null; }
+      const base = S.setStep === 'ad' ? 'card-white'
+        : S.setStep === 'intro' ? 'thumb-simple' : 'ending-simple';
+      const name = `${base}-${stamp()}.png`;
+      download(blob, name);
+      toast(`PNG 저장 · ${name}`);
+      return { blob, name };
+    }
     const outroTab = S.tab === 'outro' || S.tab === 'minimal' || S.tab === 'animal';
     const noPhotoOK = outroTab || S.tab === 'simple';   // ⑤는 사진 없이도 저장 가능
     if (!noPhotoOK && (active < 0 || !items[active])) { toast('먼저 사진을 넣어 주세요'); return null; }
@@ -1245,7 +1681,47 @@
     return zip.generateAsync({ type: 'blob' });
   }
 
+  /* ⑥ 심플 세트 — 인트로 + 광고 카드 + 아웃트로 3장을 한 번에 ZIP */
+  async function buildSetZipBlob(onProgress) {
+    const zip = new JSZip();
+    const img = active >= 0 && items[active] ? items[active].img : null;
+    const steps = [
+      ['01_thumb.png', (g) => drawSetIntro(g, img)],
+      ['02_card_white.png', (g) => drawWhiteAdCard(g)],
+      ['03_outro_simple.png', (g) => drawSetEndCard(g, img)]
+    ];
+    for (let i = 0; i < steps.length; i++) {
+      const [name, draw] = steps[i];
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      draw(c.getContext('2d'));
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      zip.file(name, blob);
+      if (onProgress) onProgress(i + 1, steps.length);
+    }
+    return zip.generateAsync({ type: 'blob' });
+  }
+
+  async function saveSetZip() {
+    if (!window.JSZip) { toast('ZIP 라이브러리를 못 불러왔어요 — 잠시 뒤 다시'); return; }
+    const btn = $('zipBtn');
+    btn.disabled = true;
+    try {
+      const blob = await buildSetZipBlob((n, t) => { btn.textContent = `ZIP ${n}/${t}`; });
+      const name = `simple-set-${stamp()}.zip`;
+      download(blob, name);
+      toast(`3종 세트 ZIP 저장 · ${name}`);
+      note('01_thumb · 02_card_white · 03_outro_simple (1080×1080 PNG 3장)');
+    } catch (e) {
+      toast('ZIP 만들기 실패 — 다시 시도해 주세요');
+    } finally {
+      btn.textContent = '3종 세트 ZIP';
+      btn.disabled = false;
+    }
+  }
+
   async function saveZip() {
+    if (S.tab === 'set') { await saveSetZip(); return; }
     if (!items.length) return;
     if (!window.JSZip) { toast('ZIP 라이브러리를 못 불러왔어요 — 잠시 뒤 다시'); return; }
     const btn = $('zipBtn');
@@ -1386,6 +1862,79 @@
     $('simpleStrokeVal').hidden = !S.simpleStroke;
   }
 
+  /* 자르기 값은 ①·⑤·⑥이 함께 쓴다 — 보이는 슬라이더·숫자를 모두 맞춘다 */
+  function setTrimValue(key, val) {
+    S[key] = val;
+    const ids = key === 'trimTop'
+      ? ['trimTop', 'sTrimTop', 'qTrimTop']
+      : ['trimBottom', 'sTrimBottom', 'qTrimBottom'];
+    ids.forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      el.value = val;
+      const out = $(id + 'Val');
+      if (out) out.textContent = val + '%';
+    });
+    save(); render();
+  }
+
+  /* ⑥ 심플 세트 — 단계(서브 탭)와 그 단계의 입력칸만 보여 준다 */
+  function applySetUI() {
+    document.querySelectorAll('#setStepSeg button').forEach(b =>
+      b.classList.toggle('on', b.dataset.step === S.setStep));
+    const map = { intro: 'setStepIntro', ad: 'setStepAd', end: 'setStepEnd' };
+    Object.entries(map).forEach(([step, id]) => {
+      const el = $(id);
+      if (el) el.hidden = S.setStep !== step;
+    });
+    const titles = {
+      intro: '⑥-1 인트로(썸네일) · 사진 + 하단 검정 그라데이션 + 제목만',
+      ad: '⑥-2 광고 카드(화이트) · 커뮤니티 글 + 상품 정보 + 댓글 2개',
+      end: '⑥-3 아웃트로(심플 엔딩) · ⑤와 같은 규격'
+    };
+    if ($('setStepTitle')) $('setStepTitle').textContent = titles[S.setStep] || '';
+    document.querySelectorAll('#setCropSeg button').forEach(b =>
+      b.classList.toggle('on', b.dataset.crop === S.setAd.crop));
+  }
+
+  /* ⑥ 입력칸 ↔ 상태 (data-set / data-key) */
+  function setTarget(grp) {
+    return grp === 'intro' ? S.setIntro : grp === 'ad' ? S.setAd : S.setEnd;
+  }
+
+  function bindSetInputs() {
+    document.querySelectorAll('[data-set]').forEach(el => {
+      const target = setTarget(el.dataset.set);
+      const key = el.dataset.key;
+      const isRange = el.type === 'range';
+      const isCheck = el.type === 'checkbox';
+      el.addEventListener('input', () => {
+        target[key] = isCheck ? el.checked : isRange ? Number(el.value) : el.value;
+        if (isRange) {
+          const out = $(el.id + 'Val');
+          if (out) out.textContent = el.value + (el.dataset.unit || '');
+        }
+        save(); render();
+      });
+    });
+  }
+
+  function syncSetInputs() {
+    document.querySelectorAll('[data-set]').forEach(el => {
+      const target = setTarget(el.dataset.set);
+      const v = target[el.dataset.key];
+      if (el.type === 'checkbox') el.checked = !!v;
+      else el.value = v == null ? '' : v;
+      if (el.type === 'range') {
+        const out = $(el.id + 'Val');
+        if (out) out.textContent = el.value + (el.dataset.unit || '');
+      }
+    });
+    [['qTrimTop', 'trimTop'], ['qTrimBottom', 'trimBottom']].forEach(([id, key]) => {
+      if ($(id)) $(id).value = S[key];
+    });
+  }
+
   /* 아웃트로 탭(마무리 다크 / 라일락 / 동물촌)에 따라 보이는 컨트롤을 바꾼다 */
   function applyOutroUI() {
     const style = S.tab === 'minimal' ? 'minimal' : S.tab === 'animal' ? 'animal' : 'summary';
@@ -1450,6 +1999,9 @@
   function init() {
     restore();
     syncInputs();
+    syncSetInputs();
+    applySetUI();
+    bindSetInputs();
     renderThumbs();
     render();
 
@@ -1496,14 +2048,9 @@
     bindRange('simpleChSize', 'simpleChSize', v => v + 'px');
     bindRange('simpleChGap', 'simpleChGap', v => v + 'px');
     // 사진 자르기는 ① 카드와 같은 값(같은 사진 위치)을 함께 쓴다
-    [['sTrimTop', 'trimTop'], ['sTrimBottom', 'trimBottom']].forEach(([id, key]) => {
-      $(id).addEventListener('input', () => {
-        S[key] = Number($(id).value);
-        $(id + 'Val').textContent = S[key] + '%';
-        $(key).value = S[key];
-        $(key + 'Val').textContent = S[key] + '%';
-        save(); render();
-      });
+    [['sTrimTop', 'trimTop'], ['sTrimBottom', 'trimBottom'],
+      ['qTrimTop', 'trimTop'], ['qTrimBottom', 'trimBottom']].forEach(([id, key]) => {
+      $(id).addEventListener('input', () => setTrimValue(key, Number($(id).value)));
     });
     $('sLine1').addEventListener('input', e => { S.simple.line1 = e.target.value; save(); render(); });
     $('sLine2').addEventListener('input', e => { S.simple.line2 = e.target.value; save(); render(); });
@@ -1562,12 +2109,17 @@
         });
         $('panelCard').hidden = S.tab !== 'card';
         $('panelSimple').hidden = S.tab !== 'simple';
-        $('panelOutro').hidden = S.tab === 'card' || S.tab === 'simple';
+        $('panelSet').hidden = S.tab !== 'set';
+        $('setStepSeg').hidden = S.tab !== 'set';
+        $('panelOutro').hidden = S.tab === 'card' || S.tab === 'simple' || S.tab === 'set';
         applyOutroUI();
         applySimpleUI();
+        applySetUI();
         renderThumbs();
         render();
-        note(S.tab === 'simple'
+        note(S.tab === 'set'
+          ? '심플 세트 — 인트로 · 광고 카드 · 아웃트로를 한 번에. 위 1·2·3으로 오가며 편집하세요.'
+          : S.tab === 'simple'
           ? '심플 엔딩 — 사진 위 가운데 두 줄 + 오른쪽 아래 채널 태그.'
           : S.tab === 'animal'
           ? '마무리(동물촌) — 꽃밭 마을 배경 위 반투명 크림 카드. 텍스트만 바꿔 PNG 저장.'
@@ -1583,12 +2135,66 @@
     $('fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
     $('pickBtnS').addEventListener('click', () => $('fileInputS').click());
     $('fileInputS').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+    $('pickBtnT').addEventListener('click', () => $('fileInputT').click());
+    $('fileInputT').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+
+    /* ⑥ 단계(서브 탭) */
+    document.querySelectorAll('#setStepSeg button').forEach(b =>
+      b.addEventListener('click', () => {
+        S.setStep = b.dataset.step;
+        applySetUI();
+        render();
+        note(S.setStep === 'intro'
+          ? '1. 인트로(썬네일) — 사진 + 하단 검정 그라데이션 + 제목만'
+          : S.setStep === 'ad'
+            ? '2. 광고 카드(화이트) — 커뮤니티 글 + 상품 정보 + 댓글 2개'
+            : '3. 아웃트로(심플 엔딩) — ⑤와 같은 규격');
+        if (window.matchMedia('(max-width: 980px)').matches) {
+          $('panelSet').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }));
+
+    /* ⑥ 광고 카드 — 상품 이미지 · 크롭 */
+    document.querySelectorAll('#setCropSeg button').forEach(b =>
+      b.addEventListener('click', () => {
+        S.setAd.crop = b.dataset.crop;
+        applySetUI();
+        save(); render();
+      }));
+    $('adPickBtn').addEventListener('click', () => $('adFileInput').click());
+    $('adFileInput').addEventListener('change', async e => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!f) return;
+      try {
+        adImg = await loadImage(f);
+        if (adUrl) URL.revokeObjectURL(adUrl);
+        adUrl = URL.createObjectURL(f);
+        $('adThumb').src = adUrl;
+        $('adThumb').hidden = false;
+        $('adClearBtn').hidden = false;
+        S.setStep = 'ad';
+        applySetUI(); render();
+        note('상품 이미지 · ' + safeName(f.name));
+      } catch (err) {
+        toast('상품 이미지를 열 수 없어요');
+      }
+    });
+    $('adClearBtn').addEventListener('click', () => {
+      if (adUrl) URL.revokeObjectURL(adUrl);
+      adUrl = null; adImg = null;
+      $('adThumb').removeAttribute('src');
+      $('adThumb').hidden = true;
+      $('adClearBtn').hidden = true;
+      render();
+    });
 
     const stage = $('stage');
     stage.addEventListener('click', () => {
       if (items.length) return;
       if (S.tab === 'card') $('fileInput').click();
       else if (S.tab === 'simple') $('fileInputS').click();
+      else if (S.tab === 'set') $('fileInputT').click();
     });
     ['dragenter', 'dragover'].forEach(ev =>
       stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.add('drag'); }));
@@ -1596,7 +2202,7 @@
       stage.addEventListener(ev, e => { e.preventDefault(); stage.classList.remove('drag'); }));
     stage.addEventListener('drop', e => {
       if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-        if (S.tab !== 'card' && S.tab !== 'simple') switchTab('card');
+        if (S.tab !== 'card' && S.tab !== 'simple' && S.tab !== 'set') switchTab('card');
         addFiles(e.dataTransfer.files);
       }
     });
@@ -1604,13 +2210,14 @@
       if (!e.clipboardData) return;
       const files = Array.from(e.clipboardData.files || []);
       if (files.length) {
-        if (S.tab !== 'card' && S.tab !== 'simple') switchTab('card');
+        if (S.tab !== 'card' && S.tab !== 'simple' && S.tab !== 'set') switchTab('card');
         addFiles(files);
       }
     });
 
     $('clearBtn').addEventListener('click', clearAll);
     $('clearBtnS').addEventListener('click', clearAll);
+    $('clearBtnT').addEventListener('click', clearAll);
 
     $('pngBtn').addEventListener('click', savePNG);
     $('zipBtn').addEventListener('click', saveZip);
@@ -1640,7 +2247,7 @@
       render();
     });
 
-    window.__cm = { S, items, render, buildZipBlob, savePNG, saveZip, addFiles, setAccent, switchTab, applyLayoutUI, applySimpleUI };
+    window.__cm = { S, items, render, buildZipBlob, buildSetZipBlob, savePNG, saveZip, addFiles, setAccent, switchTab, applyLayoutUI, applySimpleUI, applySetUI, drawSetIntro, drawWhiteAdCard, drawSetEndCard };
 
     // 사진 비우기(① 카드 · ⑤ 심플 엔딩 공통)
     function clearAll() {
@@ -1650,14 +2257,17 @@
       renderThumbs(); render();
       note(S.tab === 'simple'
         ? '사진 없이도 문구·채널 태그만으로 저장할 수 있어요.'
-        : '사진을 넣으면 바로 1:1 블러 카드가 만들어집니다.');
+        : S.tab === 'set'
+          ? '사진 없이도 문구만으로 저장할 수 있어요(바탕 #111216).'
+          : '사진을 넣으면 바로 1:1 블러 카드가 만들어집니다.');
     }
 
     // 탭 전환 시 컨트롤 상단으로 스크롤 (모바일)
     function toEndAnchor() {
       if (!window.matchMedia('(max-width: 980px)').matches) return;
       const el = S.tab === 'card' ? $('panelCard')
-        : S.tab === 'simple' ? $('panelSimple') : $('panelOutro');
+        : S.tab === 'simple' ? $('panelSimple')
+          : S.tab === 'set' ? $('panelSet') : $('panelOutro');
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
